@@ -1,4 +1,5 @@
 #include <stdio.h>
+
 #define LETTER_CASE_INTERVAL ('a' - 'A')
 #define MAX_INPUT_LENGTH 50
 #define ASCII_NULL 0
@@ -7,8 +8,16 @@
 #define MIN_VALUE '0'
 #define MAX_VALUE '9'
 
-// Change the letter case from upper to lower or vise versa
-// Other characters remain unchanged
+int changeLetterCase(int letter);
+int changeNumber(int letter);
+int main();
+
+/** 
+ * @brief Change the letter case from upper to lower or vise versa
+ * @param letter The letter character to change
+ * @return If the input wasn't a letter, returns the input unchanged.
+ * 		   Otherwise, changes an uppercase letter to a lowercase one and vise versa.
+ */
 int changeLetterCase(int letter)
 {
 	if (letter >= 'A' && letter <= 'Z')
@@ -22,8 +31,12 @@ int changeLetterCase(int letter)
 	return letter;
 }
 
-// Change every digit < 5 to 0 and every digit >= 5 to 8
-// Other characters remain unchanged
+/** 
+ * @brief Change every digit < 5 to 0 and every digit >= 5 to 8
+ * @param letter The letter character to change
+ * @return If the input wasn't a digit, returns the input unchanged.
+ *		   otherwise, returns 0 if input < 5 or 8 if input >= 5.
+ */
 int changeNumber(int letter)
 {
 	if (letter >= MIN_VALUE && letter < MID_VALUE)
@@ -37,15 +50,19 @@ int changeNumber(int letter)
 	return letter;
 }
 
+/**
+ *  @brief The main manager function. Gets a line of input and prints the output.
+ */
 int main()
 {
-	char output[MAX_INPUT_LENGTH], input[MAX_INPUT_LENGTH];
+	char output[MAX_INPUT_LENGTH], input[MAX_INPUT_LENGTH]; // input saves the original input.
 	int currentChar, i = 0;
 
 	// Get input from user.
 	while ((i < MAX_INPUT_LENGTH) && ((currentChar = getchar()) != NEW_LINE))
 	{
 		input[i] = currentChar;
+		// Changes input if needed
 		currentChar = changeLetterCase(currentChar);
 		currentChar = changeNumber(currentChar);
 		output[i] = currentChar;
