@@ -4,16 +4,20 @@
 #define MIN_BALLS_ALLOWED 1
 #define NUM_OF_PLAYERS 2
 #define NUM_OF_BOXES 2
+// Minimal number of balls in a box.
 #define MIN_BALLS_IN_BOX 1
 #define STARTING_PLAYER 1
+// The length (number of chars) of the seperator line.
 #define SEPERATOR_LENGTH 15
 #define SEPERATOR "-"
 #define BALL_SHAPE "o"
+#define TRUE 1
+#define FALSE 0
 
 int gBox[NUM_OF_BOXES], gCurrentPlayer = STARTING_PLAYER;
 
 void printXTimes(char textToPrint[], int numOfCopies);
-void printBalls();
+void printBoxes();
 int getBallsForBoxes();
 int chooseBox();
 int chooseAmount(int chosenBox);
@@ -38,15 +42,16 @@ void printXTimes(char textToPrint[], int numOfCopies)
 
 /**
  * @brief Prints the current state of all boxes.
+ * note that i counts the actual box number, the box index in the gBox array is i-1.
  */
-void printBalls()
+void printBoxes()
 {
 	int i;
 	printXTimes(SEPERATOR, SEPERATOR_LENGTH);
 	for (i = 1; i <= NUM_OF_BOXES; i++)
 	{
 		printf("Box %d: ", i);
-		printXTimes(BALL_SHAPE, gBox[i - 1]);
+		printXTimes(BALL_SHAPE, gBox[i - 1]); // Prints "o" as the number of balls in the box
 	}
 	printXTimes(SEPERATOR, SEPERATOR_LENGTH);
 	return;
@@ -70,10 +75,10 @@ int getBallsForBoxes()
 		else
 		{
 			printf("Number of balls in box must be positive.\n");
-			return 0;
+			return FALSE;
 		}
 	}
-	return 1;
+	return TRUE;
 }
 
 /**
@@ -120,7 +125,7 @@ int chooseAmount(int chosenBox)
 		}
 		else
 		{
-			shouldStop = 1;
+			shouldStop = TRUE;
 		}
 	} 
 	while (!shouldStop);
@@ -151,10 +156,10 @@ int checkWin()
 	{
 		if (gBox[i] > 0)
 		{
-			return 0;
+			return FALSE;
 		}
 	}
-	return 1;
+	return TRUE;
 }
 
 /**
@@ -168,11 +173,11 @@ int main()
 	}
 	while (!checkWin()) // As long as there is a non-empty box
 	{
-		printBalls();
+		printBoxes();
 		handlePlayerTurn();
 		gCurrentPlayer++;
-		// currentPlayer holds the actual player number. This formula gives us the numbers:
-		// 1, 2, ... , NUM_OF_PLAYERS, 1, 2, ...
+		// gCurrentPlayer holds the actual player number. 
+		// The following formula gives us the numbers: 1, 2, ... , NUM_OF_PLAYERS, 1, 2, ...
 		gCurrentPlayer = ((gCurrentPlayer - 1) % NUM_OF_PLAYERS) + 1;
 	}
 	// The player that plays after the loser is the winner.
