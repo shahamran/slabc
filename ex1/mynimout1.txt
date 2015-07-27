@@ -1,0 +1,37 @@
+How many balls in box 1?
+How many balls in box 2?
+---------------
+Box 1: ooooo
+Box 2: ooooooo
+---------------
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, how many balls do you want to take from box 1?
+Cannot take more than 3 balls at a time.
+Player 1, how many balls do you want to take from box 1?
+---------------
+Box 1: oooo
+Box 2: ooooooo
+---------------
+Player 2, it's your turn.
+Player 2, choose a box (1 or 2):
+Player 2, it's your turn.
+Player 2, choose a box (1 or 2):
+Player 2, how many balls do you want to take from box 1?
+---------------
+Box 1: o
+Box 2: ooooooo
+---------------
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, how many balls do you want to take from box 2?
+---------------
+Box 1: o
+Box 2: oooo
+---------------
+Player 2, it's your turn.
+Player 2, choose a box (1 or 2):
+Player 2, how many balls do you want to take from box 1?
+Cannot take more balls than what's in the box.
+Player 2, how many balls do you want to take from box 1?
+Player 1 wins the game.
