@@ -90,10 +90,11 @@ int chooseBox()
 	int chosenBox = 0;
 	do 
 	{
+		printf("Player %d, it's your turn.\n", gCurrentPlayer);
 		printf("Player %d, choose a box (1 or 2):\n", gCurrentPlayer);
 		scanf("%d", &chosenBox);
 	}
-	while(chosenBox < 1 || chosenBox > NUM_OF_BOXES || gBox[chosenBox - 1] == 0);
+	while(chosenBox < 1 || chosenBox > NUM_OF_BOXES);
 	return chosenBox;
 }
 
@@ -111,7 +112,7 @@ int chooseAmount(int chosenBox)
 		printf("Player %d, how many balls do you want to take from box %d?\n",
 		       gCurrentPlayer, chosenBox + 1);
 		scanf("%d", &chosenBalls);
-		if (chosenBalls <= 0)
+		if (chosenBalls < MIN_BALLS_ALLOWED)
 		{
 			printf("Number of balls to take must be positive.\n");
 		}
@@ -138,7 +139,6 @@ int chooseAmount(int chosenBox)
 void handlePlayerTurn()
 {
 	int chosenBox = 0, chosenBalls = 0;
-	printf("Player %d, it's your turn.\n", gCurrentPlayer);
 	chosenBox = chooseBox() - 1; // Gets the INDEX of the chosen box.
 	chosenBalls = chooseAmount(chosenBox);
 	gBox[chosenBox] -= chosenBalls;
@@ -154,12 +154,12 @@ int checkWin()
 	int i;
 	for (i = 0; i < NUM_OF_BOXES; i++)
 	{
-		if (gBox[i] > 0)
+		if (gBox[i] <= 0)
 		{
-			return FALSE;
+			return TRUE;
 		}
 	}
-	return TRUE;
+	return FALSE;
 }
 
 /**
