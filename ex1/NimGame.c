@@ -32,7 +32,7 @@ int main();
  */
 void printXTimes(char textToPrint[], int numOfCopies)
 {
-	unsigned int i;
+	int i;
 	for (i = 0; i < numOfCopies; i++)
 	{
 		printf(textToPrint);
@@ -171,10 +171,11 @@ int main()
 	{
 		return 0; // Quit if an error has occured
 	}
+	printBoxes();
 	while (!checkWin()) // As long as there is a non-empty box
 	{
-		printBoxes();
 		handlePlayerTurn();
+		printBoxes();
 		gCurrentPlayer++;
 		// gCurrentPlayer holds the actual player number. 
 		// The following formula gives us the numbers: 1, 2, ... , NUM_OF_PLAYERS, 1, 2, ... etc
