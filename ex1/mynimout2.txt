@@ -1,0 +1,124 @@
+How many balls in box 1?
+How many balls in box 2?
+---------------
+Box 1: ooooooooooooooooooooooooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, how many balls do you want to take from box 1?
+---------------
+Box 1: oooooooooooooooooooooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 2, it's your turn.
+Player 2, choose a box (1 or 2):
+Player 2, how many balls do you want to take from box 1?
+---------------
+Box 1: ooooooooooooooooooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, how many balls do you want to take from box 1?
+---------------
+Box 1: oooooooooooooooooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 2, it's your turn.
+Player 2, choose a box (1 or 2):
+Player 2, how many balls do you want to take from box 2?
+---------------
+Box 1: oooooooooooooooooooo
+Box 2: ooooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, how many balls do you want to take from box 2?
+---------------
+Box 1: oooooooooooooooooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 2, it's your turn.
+Player 2, choose a box (1 or 2):
+Player 2, how many balls do you want to take from box 1?
+---------------
+Box 1: oooooooooooooooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, how many balls do you want to take from box 1?
+---------------
+Box 1: oooooooooooooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 2, it's your turn.
+Player 2, choose a box (1 or 2):
+Player 2, how many balls do you want to take from box 1?
+---------------
+Box 1: oooooooooooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, how many balls do you want to take from box 1?
+---------------
+Box 1: oooooooooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 2, it's your turn.
+Player 2, choose a box (1 or 2):
+Player 2, how many balls do you want to take from box 1?
+---------------
+Box 1: oooooooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, how many balls do you want to take from box 1?
+---------------
+Box 1: oooooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 2, it's your turn.
+Player 2, choose a box (1 or 2):
+Player 2, how many balls do you want to take from box 1?
+Cannot take more than 3 balls at a time.
+Player 2, how many balls do you want to take from box 1?
+Number of balls to take must be positive.
+Player 2, how many balls do you want to take from box 1?
+Number of balls to take must be positive.
+Player 2, how many balls do you want to take from box 1?
+---------------
+Box 1: oooooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, how many balls do you want to take from box 1?
+---------------
+Box 1: oooo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 2, it's your turn.
+Player 2, choose a box (1 or 2):
+Player 2, how many balls do you want to take from box 1?
+---------------
+Box 1: oo
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 1, it's your turn.
+Player 1, choose a box (1 or 2):
+Player 1, how many balls do you want to take from box 1?
+Cannot take more balls than what's in the box.
+Player 1, how many balls do you want to take from box 1?
+---------------
+Box 1: 
+Box 2: oooooooooooooooooooooooooooooooooooooooooooooo
+---------------
+Player 2 wins the game.

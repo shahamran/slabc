@@ -34,4 +34,8 @@ Player 2, choose a box (1 or 2):
 Player 2, how many balls do you want to take from box 1?
 Cannot take more balls than what's in the box.
 Player 2, how many balls do you want to take from box 1?
+---------------
+Box 1: 
+Box 2: oooo
+---------------
 Player 1 wins the game.
