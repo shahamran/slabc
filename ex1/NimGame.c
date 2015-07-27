@@ -32,7 +32,7 @@ int main();
  */
 void printXTimes(char textToPrint[], int numOfCopies)
 {
-	int i;
+	unsigned int i;
 	for (i = 0; i < numOfCopies; i++)
 	{
 		printf(textToPrint);
@@ -46,7 +46,7 @@ void printXTimes(char textToPrint[], int numOfCopies)
  */
 void printBoxes()
 {
-	int i;
+	unsigned int i;
 	printXTimes(SEPERATOR, SEPERATOR_LENGTH);
 	for (i = 1; i <= NUM_OF_BOXES; i++)
 	{
@@ -138,7 +138,7 @@ int chooseAmount(int chosenBox)
  */
 void handlePlayerTurn()
 {
-	int chosenBox = 0, chosenBalls = 0;
+	unsigned int chosenBox = 0, chosenBalls = 0;
 	chosenBox = chooseBox() - 1; // Gets the INDEX of the chosen box.
 	chosenBalls = chooseAmount(chosenBox);
 	gBox[chosenBox] -= chosenBalls;
@@ -151,7 +151,7 @@ void handlePlayerTurn()
  */
 int checkWin()
 {
-	int i;
+	unsigned int i;
 	for (i = 0; i < NUM_OF_BOXES; i++)
 	{
 		if (gBox[i] <= 0)
@@ -177,10 +177,11 @@ int main()
 		handlePlayerTurn();
 		gCurrentPlayer++;
 		// gCurrentPlayer holds the actual player number. 
-		// The following formula gives us the numbers: 1, 2, ... , NUM_OF_PLAYERS, 1, 2, ...
+		// The following formula gives us the numbers: 1, 2, ... , NUM_OF_PLAYERS, 1, 2, ... etc
 		gCurrentPlayer = ((gCurrentPlayer - 1) % NUM_OF_PLAYERS) + 1;
 	}
 	// The player that plays after the loser is the winner.
+	// (in our case, the player who didn't take the last ball in a box)
 	printf("Player %d wins the game.\n", gCurrentPlayer);
 	return 0;
 }
