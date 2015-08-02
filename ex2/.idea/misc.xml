@@ -1,6 +1,8 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project version="4">
-  <component name="CMakeWorkspace" PROJECT_DIR="C:\Cygwin\home\Ran\safe\slabc\ex2" />
+  <component name="CMakeWorkspace" PROJECT_DIR="C:\Cygwin\home\Ran\safe\slabc\ex2">
+    <contentRoot DIR="D:\cygwin64\home\Ranchuk\safe\slabc\ex2" />
+  </component>
   <component name="ProjectLevelVcsManager" settingsEditedManually="false">
     <OptionsSetting value="true" id="Add" />
     <OptionsSetting value="true" id="Remove" />

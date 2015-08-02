@@ -3,7 +3,7 @@
 
 #define MAX_USER_INPUT 50
 #define MY_STRING "str"
-#define LINE_SEPERATOR "line"
+#define LINE_SEPARATOR "line"
 #define END "end"
 
 void testMyString()
@@ -11,7 +11,7 @@ void testMyString()
     return;
 }
 
-void testLineSeperator()
+void testLineSeparator()
 {
     return;
 }
@@ -24,9 +24,9 @@ int main() {
         {
             testMyString();
         }
-        else if (!strcmp(test, LINE_SEPERATOR))
+        else if (!strcmp(test, LINE_SEPARATOR))
         {
-            testLineSeperator();
+            testLineSeparator();
         }
         else
         {
