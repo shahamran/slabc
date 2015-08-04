@@ -5,14 +5,19 @@
 #define STR_END '\0'
 #define SEPARATOR ','
 
+// Reads one line from a given file.
 char *readLine(char * destLine, FILE * inFile)
 {
-    int i = -1;
-    do
+    int i = 0;
+    while (!feof(inFile))
     {
+        destLine[i] = fgetc(inFile);
+        if (destLine[i] == EOL)
+        {
+            break;
+        }
         i++;
     }
-    while ((destLine[i] = fgetc(inFile)) != EOL);
     return destLine;
 }
 
@@ -35,27 +40,35 @@ Vector *parseLine(Vector * p_v, const char * line, int dim)
         }
         line++;
         currNum[i] = STR_END;
-        sscanf(currNum, "%lf", &(p_v->data[j]));        
+        sscanf(currNum, "%lf", &(p_v->_data[j]));
     }
     if (*line != EOL)
     {
-        sscanf(line, "%d", &(p_v->tag));
+        sscanf(line, "%d", &(p_v->_tag));
     }
     return p_v;
 }
 
-Vector * train(Vector *p_w, Vector *p_v, FILE *inFile, int dim, int numOfPts)
+Tag predict(const Vector * p_w, const char * line, int dim)
 {
+    Vector v;
+    parseLine(&v, line, dim);
+    return dotProduct(p_w, &v, dim) < EPSILON ? MINUS : PLUS;
+}
+
+Vector * train(Vector *p_w, FILE *inFile, int dim, int numOfPts)
+{
+    Vector v;
     char line[MAX_LINE_LENGTH + 1];
     Tag tempTag = PLUS;
     for (int i = 0; i < numOfPts; i++)
     {
         readLine(line, inFile);
-        parseLine(p_v, line, dim);
-        tempTag = dotProduct(p_w, p_v, dim) < EPSILON ? MINUS : PLUS;
-        if (tempTag != p_v->tag)
+        parseLine(&v, line, dim);
+        tempTag = dotProduct(p_w, &v, dim) < EPSILON ? MINUS : PLUS;
+        if (tempTag != v._tag)
         {
-            addVector(p_w, p_v, dim);
+            addVector(p_w, &v, dim);
         }
     }
     return p_w;
@@ -67,19 +80,22 @@ void parseFile(FILE *inFile)
     int dim, numOfPts;
     readLine(line, inFile); // First Line
     sscanf(line, "%d", &dim); // Read the dimension (n)
-    assert(dim <= MAX_DIMENSION);
+    assert(dim <= MAX_DIMENSION && dim > 1);
     readLine(line, inFile); // Second Line
     sscanf(line, "%d", &numOfPts); // Read the number of points (m)
 
-    Vector v, w;
+    Vector w;
     // Training set:
-    train(&w, &v, inFile, dim, numOfPts);
+    train(&w, inFile, dim, numOfPts);
     // Predictions:
     while (!feof(inFile))
     {
         readLine(line, inFile);
-        parseLine(&v, line, dim);
-        printf("%d\n", dotProduct(&w, &v, dim) < EPSILON ? MINUS : PLUS);
+        if (*line == EOL)
+        {
+            break;
+        }
+        printf("%d\n", predict(&w, line, dim));
     }
 }
 
