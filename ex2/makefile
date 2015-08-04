@@ -12,6 +12,6 @@ LineSeparator.o: LineSeparator.c LineSeparator.h
 ex2.tar: MyString.c LineSeparator.c LineSeparator.h
 	tar -cvf ex2.tar MyString.c LineSeparator.c LineSeparator.h
 clean:
-	rm -f *.o TestLine TestString
+	rm -f *.o TestLine TestString *.gch
 # Not really a file name
 .PHONY: clean

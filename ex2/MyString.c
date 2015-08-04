@@ -4,7 +4,12 @@
 #define MAX_INPUT 50 // For the main function
 
 // Enum for Boolean type.
-typedef enum {VERY_FALSE = -1, FALSE = 0, TRUE = 1} Boolean;
+typedef enum 
+{
+    VERY_FALSE = -1,
+    FALSE = 0,
+    TRUE = 1
+} Boolean;
 
 /**
  * Checks if a string (str2) matches another (str1) when starting to read str1 from
@@ -95,4 +100,3 @@ int main()
            countSubStr(str1, str2, isCyclic), str1);
     return 0;
 }
-

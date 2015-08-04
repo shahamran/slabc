@@ -1,6 +1,6 @@
 #include "LineSeparator.h"
 #define SEPARATOR ","
-#define READ_LINE(l,f) fgets(l, MAX_LINE_LENGTH, f)
+#define READ_LINE(l, f) fgets(l, MAX_LINE_LENGTH, f)
 
 /**
  * Reads a line and extract a vector's initialization from it,
@@ -16,8 +16,6 @@ static Vector * parseLine(Vector* p_v, char* line, int dim)
     {
         return p_v;
     }
-
-    // int i = 0; // An index for the currNum string
     char *currNum;
     currNum = strtok(line, SEPARATOR);
     for (int j = 0; j < dim; j++)
@@ -25,37 +23,11 @@ static Vector * parseLine(Vector* p_v, char* line, int dim)
         sscanf(currNum, "%lf", &(p_v->_data[j]));
         currNum = strtok(NULL, SEPARATOR);
     }
-    if (currNum != NULL)
+    if (currNum != NULL) // This means a tag value exists
     {
         sscanf(currNum, "%d", &(p_v->_tag));
     }
     return p_v;
-    /*
-    for (int j = 0; j < dim; j++)
-    {
-        i = 0;
-        // Read until a separator or the end of line is reached.
-        while (*line != SEPARATOR && *line != EOL)
-        {
-            currNum[i] = *line;
-            i++;
-            line++;
-        }
-        // 
-        if (*line == SEPARATOR)
-        {
-            line++;
-        }
-        currNum[i] = STR_END;
-        sscanf(currNum, "%lf", &(p_v->_data[j])); // write the number that was read to the vector
-    }
-    // If the line end wasn't reached, there is a tag value to be read
-    if (*line != EOL)
-    {
-        sscanf(line, "%d", &(p_v->_tag));
-    }
-    return p_v;
-    */
 }
 
 /**
@@ -123,7 +95,7 @@ void getPredictions(Vector* p_w, FILE* inFile, int dim)
 }
 
 /**
- * Reads the file that was given to train a classifier vector and make predictions.
+ * Reads the file that was given and train a classifier vector to make predictions.
  * @param inFile The given file.
  */
 void parseFile(FILE* inFile)

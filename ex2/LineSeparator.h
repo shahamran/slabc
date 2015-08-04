@@ -21,7 +21,11 @@
 /**
  * A tag enum that represents the classification of a vector.
  */
-typedef enum {PLUS = 1, MINUS = -1} Tag;
+typedef enum 
+{
+	PLUS = 1,
+	MINUS = -1
+} Tag;
 
 // Structs:
 /**
@@ -35,14 +39,34 @@ typedef struct Vector
 } Vector;
 
 // Functions:
-void parseFile(FILE *inFile);
-Vector * trainVector(Vector *p_w, FILE *inFile, int dim, int numOfPts);
-void getPredictions(Vector * p_w, FILE * inFile, int dim);
+
+/**
+ * Reads the file that was given and train a classifier vector to make predictions.
+ * @param inFile The given file.
+ */
+void parseFile(FILE* inFile);
+/**
+ * Gets a classification vector and trains it according to a given number of points.
+ * @param p_w A pointer to the classification vector.
+ * @param inFile The file that specifies the training set.
+ * @param dim The dimension of the vector.
+ * @param numOfPts The number of training points (m).
+ * @return A pointer to the same training vector (p_w).
+ */
+Vector * trainVector(Vector* p_w, FILE* inFile, int dim, int numOfPts);
+/**
+ * Gets a classifier and prints its predictions to the the vectors specified in the rest of
+ * the file.
+ * @param p_w A pointer to the classifier vector.
+ * @param inFile The file to read.
+ * @param dim The dimension of the vector.
+ */
+void getPredictions(Vector* p_w, FILE* inFile, int dim);
 
 // Implementations:
 
 /**
- * Sets all coordinates of a vector to be START_VALUE.
+ * Sets all coordinates of a vector to be START_VALUE (0).
  * @param p_v The vector to be initialized.
  * @param dim The dimension of the vector.
  * @return The pointer to the vector that was initialized.
