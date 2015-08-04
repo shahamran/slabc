@@ -1,5 +1,10 @@
 #ifndef LINE_SEPARATOR_H
 
+// Includes:
+#include <stdio.h>
+#include <assert.h>
+#include <string.h>
+
 // Defines:
 #define LINE_SEPARATOR_H
 #define MAX_LINE_LENGTH 150
@@ -11,14 +16,6 @@
 #define EOS '\0' // Stands for End-of-String
 #define START_VALUE 0.0
 
-// Includes:
-#include <stdio.h>
-#include <assert.h>
-
-// Functions:
-void parseFile(FILE *inFile);
-Vector * trainVector(Vector *p_w, FILE *inFile, int dim, int numOfPts);
-void getPredictions(Vector * p_w, FILE * inFile, int dim);
 
 // Enums:
 /**
@@ -37,6 +34,11 @@ typedef struct Vector
     Tag _tag;
 } Vector;
 
+// Functions:
+void parseFile(FILE *inFile);
+Vector * trainVector(Vector *p_w, FILE *inFile, int dim, int numOfPts);
+void getPredictions(Vector * p_w, FILE * inFile, int dim);
+
 // Implementations:
 
 /**
@@ -45,7 +47,7 @@ typedef struct Vector
  * @param dim The dimension of the vector.
  * @return The pointer to the vector that was initialized.
  */
-Vector *initVector(Vector *p_v, int dim)
+Vector* initVector(Vector* p_v, int dim)
 {
 	for (int i = 0; i < dim; i++)
 	{
@@ -61,7 +63,7 @@ Vector *initVector(Vector *p_v, int dim)
  * @param dim The dimension of the vectors
  * @return A pointer to the result of the addition/subtraction - p_v
  */
-Vector *addVector(Vector *p_v, const Vector *p_w, int dim)
+Vector* addVector(Vector* p_v, const Vector* p_w, int dim)
 {
 	if (p_v == NULL || p_w == NULL)
 	{
@@ -83,7 +85,7 @@ Vector *addVector(Vector *p_v, const Vector *p_w, int dim)
  * @param dim The dimension of the vectors.
  * @return The dot product of the vectors.
  */
-double dotProduct(const Vector *p_v, const Vector *p_w, int dim)
+double dotProduct(const Vector* p_v, const Vector* p_w, int dim)
 {
 	int i;
 	double total = 0.0;

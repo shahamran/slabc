@@ -1,5 +1,5 @@
 #include "LineSeparator.h"
-#define SEPARATOR ','
+#define SEPARATOR ","
 #define READ_LINE(l,f) fgets(l, MAX_LINE_LENGTH, f)
 
 /**
@@ -10,14 +10,27 @@
  * @param dim The dimension of the vector.
  * @return The pointer of the vector that was initialized.
  */
-static Vector * parseLine(Vector* p_v, const char* line, int dim)
+static Vector * parseLine(Vector* p_v, char* line, int dim)
 {
     if (*line == EOL) // Make sure this is not an empty line.
     {
         return p_v;
     }
-    int i; // An index for the currNum string
-    char currNum[MAX_LINE_LENGTH];
+
+    // int i = 0; // An index for the currNum string
+    char *currNum;
+    currNum = strtok(line, SEPARATOR);
+    for (int j = 0; j < dim; j++)
+    {
+        sscanf(currNum, "%lf", &(p_v->_data[j]));
+        currNum = strtok(NULL, SEPARATOR);
+    }
+    if (currNum != NULL)
+    {
+        sscanf(currNum, "%d", &(p_v->_tag));
+    }
+    return p_v;
+    /*
     for (int j = 0; j < dim; j++)
     {
         i = 0;
@@ -42,6 +55,7 @@ static Vector * parseLine(Vector* p_v, const char* line, int dim)
         sscanf(line, "%d", &(p_v->_tag));
     }
     return p_v;
+    */
 }
 
 /**
@@ -53,7 +67,7 @@ static Vector * parseLine(Vector* p_v, const char* line, int dim)
  * @return The Tag value that is given by <w,v> >? 0
  * Note that in our case: |<w,v>| < EPSILON <=> <w,v> = 0
  */
-static Tag predict(const Vector* p_w, const char* line, int dim)
+static Tag predict(const Vector* p_w, char* line, int dim)
 {
     Vector v;
     parseLine(&v, line, dim);
