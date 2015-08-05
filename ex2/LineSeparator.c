@@ -1,6 +1,16 @@
 #include "LineSeparator.h"
 #define SEPARATOR ","
+// Macro for a function for reading a line.
 #define READ_LINE(l, f) fgets(l, MAX_LINE_LENGTH, f)
+// The 'read' token for the fopen function
+#define READ_ONLY "r"
+
+// Enums for the command line arguments that are given to this program.
+enum 
+{
+    PROG_NAME = 0,
+    FILE_NAME = 1
+} CommandLineArgument;
 
 /**
  * Reads a line and extract a vector's initialization from it,
@@ -12,10 +22,7 @@
  */
 static Vector * parseLine(Vector* p_v, char* line, int dim)
 {
-    if (*line == EOL) // Make sure this is not an empty line.
-    {
-        return p_v;
-    }
+    assert (line != NULL && *line != EOL);
     char *currNum;
     currNum = strtok(line, SEPARATOR);
     for (int j = 0; j < dim; j++)
@@ -37,20 +44,18 @@ static Vector * parseLine(Vector* p_v, char* line, int dim)
  * @param line The string of the line to be parsed.
  * @param dim The dimension of the vector.
  * @return The Tag value that is given by <w,v> >? 0
- * Note that in our case: |<w,v>| < EPSILON <=> <w,v> = 0
+ * Note that in our case: |<w,v>| < EPSILON <=> <w,v> = 0 => <w,v> < EPSILON ==> Tag = -1
  */
 static Tag predict(const Vector* p_w, char* line, int dim)
 {
     Vector v;
     parseLine(&v, line, dim);
-    // <w,v> < EPSILON  ==> v.tag = -1
-    // <w,v> >= EPSILON ==> v.tag = 1
-    return dotProduct(p_w, &v, dim) < EPSILON ? MINUS : PLUS;
+    return getTag(p_w, &v, dim);
 }
 
 /**
  * Gets a classification vector and trains it according to a given number of points.
- * @param p_w A pointer to the classification vector.
+ * @param p_w A pointer to the classification vector to be trained.
  * @param inFile The file that specifies the training set.
  * @param dim The dimension of the vector.
  * @param numOfPts The number of training points (m).
@@ -58,6 +63,8 @@ static Tag predict(const Vector* p_w, char* line, int dim)
  */
 Vector * trainVector(Vector* p_w, FILE* inFile, int dim, int numOfPts)
 {
+    assert (p_w != NULL && inFile != NULL && numOfPts >= 0);
+    initVector(p_w, dim); // Classifier is initially set to be the 0 vector.
     Vector v;
     char line[MAX_LINE_LENGTH + 1]; // +1 for '\0'
     Tag tempTag; // The predicted Tag value.
@@ -65,7 +72,7 @@ Vector * trainVector(Vector* p_w, FILE* inFile, int dim, int numOfPts)
     {
         READ_LINE(line, inFile);
         parseLine(&v, line, dim);
-        tempTag = dotProduct(p_w, &v, dim) < EPSILON ? MINUS : PLUS;
+        tempTag = getTag(p_w, &v, dim);
         if (tempTag != v._tag) // Checks if an update to the vector is needed.
         {
             addVector(p_w, &v, dim);
@@ -83,11 +90,12 @@ Vector * trainVector(Vector* p_w, FILE* inFile, int dim, int numOfPts)
  */
 void getPredictions(Vector* p_w, FILE* inFile, int dim)
 {
-    char line[MAX_LINE_LENGTH + 1];
+    assert(inFile != NULL && dim <= MAX_DIMENSION && dim > 1);
+    char line[MAX_LINE_LENGTH + 1]; // Again, +1 for '\0'
     while (!feof(inFile))
     {
         if (READ_LINE(line, inFile) != NULL)
-        {
+        {// Prints predictions
             printf("%d\n", predict(p_w, line, dim));
         }
     }
@@ -100,6 +108,7 @@ void getPredictions(Vector* p_w, FILE* inFile, int dim)
  */
 void parseFile(FILE* inFile)
 {
+    assert (inFile != NULL);
     char line[MAX_LINE_LENGTH + 1]; // +1 for '\0'
     int dim, numOfPts; // Dimension and number of training points
     READ_LINE(line, inFile);
@@ -109,33 +118,32 @@ void parseFile(FILE* inFile)
     sscanf(line, "%d", &numOfPts); // Read the number of points (m) - second line
 
     Vector w; // Our classifier (the vector perp. to the linear classifier)
-    initVector(&w, dim); // initially set to be the 0 vector.
-    // Training set:
     trainVector(&w, inFile, dim, numOfPts);
-    // Predictions:
     getPredictions(&w, inFile, dim);
     return;
 }
 
 /**
  * The main function.
+ * Checks the validity of the command line argument that was given and 
+ * calls the parse function.
  */
 int main(int argc, char* argv[])
 {
     if (argc != 2)
     {
-        printf("Usage: %s <file_name>\n", argv[0]);
+        printf("Usage: %s <file_name>\n", argv[PROG_NAME]);
         return 0;
     }
 
-    FILE *inFile = fopen(argv[1], "r");
+    FILE *inFile = fopen(argv[FILE_NAME], READ_ONLY); // Open
     if (inFile == NULL)
     {
-        printf("Unable to open input file: %s\n", argv[1]);
+        printf("Unable to open input file: %s\n", argv[FILE_NAME]);
         return 0;
     }
 
     parseFile(inFile);
-    fclose(inFile);
+    fclose(inFile); // Close
     return 0;
 }

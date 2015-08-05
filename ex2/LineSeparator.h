@@ -45,8 +45,10 @@ typedef struct Vector
  * @param inFile The given file.
  */
 void parseFile(FILE* inFile);
+
 /**
  * Gets a classification vector and trains it according to a given number of points.
+ * Note that this function trains a vector from scratch - meaning any data on it will be lost.
  * @param p_w A pointer to the classification vector.
  * @param inFile The file that specifies the training set.
  * @param dim The dimension of the vector.
@@ -54,6 +56,7 @@ void parseFile(FILE* inFile);
  * @return A pointer to the same training vector (p_w).
  */
 Vector * trainVector(Vector* p_w, FILE* inFile, int dim, int numOfPts);
+
 /**
  * Gets a classifier and prints its predictions to the the vectors specified in the rest of
  * the file.
@@ -118,6 +121,19 @@ double dotProduct(const Vector* p_v, const Vector* p_w, int dim)
 		total += p_v->_data[i] * p_w->_data[i];
 	}
 	return total;
+}
+
+/**
+ * Gets the tag of a target vector determined by the dot product of it
+ * and a given classifier vector.
+ * @param p_w A pointer to the classifier vector.
+ * @param p_v A pointer to the vector to be tagged.
+ * @param dim The dimension of the vectors.
+ * @return The tag of the target vector as predicted by the classifier.
+ */
+Tag getTag(const Vector* p_w, const Vector* p_v, int dim)
+{
+	return dotProduct(p_w, p_v, dim) < EPSILON ? MINUS : PLUS;
 }
 
 #endif //LINE_SEPARATOR_H
