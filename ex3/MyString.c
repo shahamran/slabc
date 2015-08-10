@@ -1,65 +1,27 @@
+// ---------------------------- includes --------------------------------
+
 #include "MyString.h"
 #include <stdlib.h> // For malloc..
 #include <assert.h>
 #include <string.h> // memcmp and memcpy
 
-#define EOS '\0'
+// ---------------------------- constants -------------------------------
+
+#define EOS '\0' // End-of-String
 #define ZERO_CHAR '0'
 #define INT_BASE 10
 #define MINUS_SIGN '-'
-
-typedef struct _Node
-{
-	char* _str;
-	size_t _len;
-	size_t _numOfStr;
-} Node;
+#define LESSER -1
+#define GREATER 1
+#define EQUAL 0
 
 struct _MyString
 {
-	Node* _data;
+	char* _str;
+	size_t _len;
 };
 
 // ------------------------ helper functions ----------------------------
-
-static Node * nodeDeepCopy(const Node* node)
-{
-	char* newStr = (char*)malloc(node->_len);
-	if (newStr == NULL)
-	{
-		return NULL;
-	}
-	Node* newNode = (Node*)malloc(sizeof(Node));
-	if (newNode == NULL)
-	{
-		free(newStr);
-		return NULL;
-	}
-	memcpy(newStr, node->_str, sizeof(char));
-	newNode->_len = node->_len;
-	newNode->_numOfStr = 1;
-	newNode->_str = newStr;
-	return newNode;
-}
-
-static void freeNode(Node *node)
-{
-	if (node == NULL)
-	{
-		return;
-	}
-	if (node->_numOfStr == 1)
-	{
-		free(node->_str);
-		node->_str = NULL;
-		free(node);
-	}
-	else
-	{
-		node->_numOfStr--;
-	}	
-	return;
-}
 
 static char digToChar(int digit)
 {
@@ -90,26 +52,58 @@ static int pow(int base, unsigned int powerVal)
 	return result;
 }
 
+static int defaultComparator(const MyString *str1, const MyString *str2)
+{
+	if (str1 == NULL || str2 == NULL)
+	{
+		return MYSTR_ERROR_CODE;
+	}
+
+	if (str1->_len == str2->_len)
+	{ // If the string have the same size, compare chars
+		for (int i = 0; i < str1->_len; i++)
+		{
+			if (str1->_str[i] < str2->_str[i])
+			{
+				return LESSER;
+			}
+			else if (str1->_str[i] > str2->_str[i])
+			{
+				return GREATER;
+			}
+		}
+		return EQUAL;
+	}
+	else
+	{ // Otherwise, the longer string will be the greater one.
+		return str1->_len < str2->_len ? LESSER : GREATER;
+	}
+}
+
+static MyStringRetVal strAlloc(char** dest, size_t strLen)
+{
+	char* temp = *dest;
+	*dest = (char*)malloc(sizeof(char) * strLen);
+	if (*dest == NULL)
+	{
+		*dest = temp;
+		return MYSTRING_ERROR;
+	}
+	else
+	{
+		free(temp);
+		return MYSTRING_SUCCESS;
+	}
+}
+
 // ------------------------- implementations ----------------------------
 MyString * myStringAlloc()
 {
-	MyString* newString = NULL;
-	Node* newNode = (Node*)malloc(sizeof(Node));
-	if (newNode != NULL)
-	{
-		newNode->_len = 0;
-		newNode->_str = NULL;
-		newNode->_numOfStr = 1;
-		newString = (MyString*)malloc(sizeof(MyString));
-		if (newString == NULL)
-		{
-			free(newNode);
-			newNode = NULL;
-		}
-		else
-		{
-			newString->_data = newNode;
-		}
+	MyString* newString = (MyString*)malloc(sizeof(MyString));
+	if (!newString == NULL)
+	{ // These are the empty string values (that I chose).
+		newString->_len = 0;
+		newString->_str = NULL;
 	}
 	return newString;
 }
@@ -120,30 +114,23 @@ void myStringFree(MyString *str)
 	{
 		return;
 	}
-	assert(str->_data != NULL);
-	if (str->_data->_numOfStr == 1)
-	{
-		free(str->_data->_str);
-		str->_data->_str = NULL;
-		free(str->_data);
-		str->_data = NULL;
-		free(str);
-	}
-	else
-	{
-		str->_data->_numOfStr--;
-		free(str);
-	}
+	free(str->_str);
+	str->_str = NULL;
+	free(str);
+	return;
 }
 
 MyString * myStringClone(const MyString *str)
 {
 	assert(str != NULL);
-	MyString* newString = (MyString*)malloc(sizeof(MyString));
+	MyString* newString = myStringAlloc();
 	if (newString != NULL)
 	{
-		newString->_data = str->_data;
-		newString->_data->_numOfStr++;
+		if (myStringSetFromMyString(newString, str) == MYSTRING_ERROR)
+		{
+			myStringFree(newString);
+			newString = NULL;
+		}		
 	}
 	return newString;
 }
@@ -154,46 +141,48 @@ MyStringRetVal myStringSetFromMyString(MyString *str, const MyString *other)
 	{
 		return MYSTRING_ERROR;
 	}
-	assert(str->_data != NULL && other->_data != NULL);
-	MyString* temp = str;
-	str->_data = other->_data;
-	str->_data->_numOfStr++;
-	myStringFree(temp);
-	return MYSTRING_SUCCESS;
+	if (strAlloc(&(str->_str), other->_len) == MYSTRING_ERROR)
+	{
+		return MYSTRING_ERROR;
+	}
+	else
+	{
+		str->_len = other->_len;
+		memcpy(str->_str, other->_str, sizeof(char) * str->_len);
+		return MYSTRING_SUCCESS;
+	}
 }
 
 MyStringRetVal myStringFilter(MyString *str, bool (*filt)(const char *))
 {
-	if (str == NULL || filt == NULL || str->_data == NULL)
+	if (str == NULL || filt == NULL || str->_str == NULL)
 	{
 		return MYSTRING_ERROR;
 	}
-	Node* data = nodeDeepCopy(str->_data);
-	if (data == NULL)
+	// Go over the string from the end to the start
+	for (int i = str->_len - 1; i >= 0; i--)
 	{
-		return MYSTRING_ERROR;
-	}
-	for (int i = data->_len - 1; i >= 0; i--)
-	{
-		if (filt(data->_str[i]))
-		{
-			if (i < data->_len - 1)
+		if (filt(str->_str[i]))
+		{ // If a char should be filtered, put the next char instead of it and decrease the length
+			if (i < str->_len - 1)
 			{
-				data->_str[i] = data->_str[i + 1];
+				str->_str[i] = str->_str[i + 1];
 			}
-			data->_len--;
+			str->_len--;
 		}
 	}
-	if (str->_data->_len == data->_len) // This means the filter did nothing.
+	// Try to resize the memory block, since the content may have gotten smaller
+	char* temp = str->_str;
+	str->_str = (char*)realloc(str->_str, str->_len); 
+	if (str->_str != NULL)
 	{
-		freeNode(data);
-		data = NULL;
+		free(temp);
 	}
 	else
 	{
-		freeNode(str->_data);
-		str->_data = data;
+		str->_str = temp;
 	}
+	// Even if reallocation didn't succeed, the operation still succeeded.
 	return MYSTRING_SUCCESS;
 }
 
@@ -205,26 +194,20 @@ MyStringRetVal myStringSetFromCString(MyString *str, const char * cString)
 	}
 	size_t len = 0;
 	while (cString[len] != EOS)
-	{
+	{ // Check the c string length
 		len++;
 	}
-	char* newStr = (char*)malloc(sizeof(char) * len);
-	if (newStr == NULL)
+	// Try to allocate memory for the dest string
+	if (strAlloc(&(str->_str), len) == MYSTRING_ERROR)
 	{
 		return MYSTRING_ERROR;
 	}
-	Node* newNode = (Node*)malloc(sizeof(Node));
-	if (newNode == NULL)
-	{
-		return MYSTRING_ERROR;
+	else
+	{ // Copy the content excluding the EOS char (len == strlen)
+		memcpy(str->_str, cString, sizeof(char) * len);
+		str->_len = len;
+		return MYSTRING_SUCCESS;
 	}
-	memcpy(newStr, cString, len);
-	newNode->_len = len;
-	newNode->_str = newStr;
-	newNode->_numOfStr = 1;
-	freeNode(str->_data);
-	str->_data = newNode;
-	return MYSTRING_SUCCESS;
 }
 
 MyStringRetVal myStringSetFromInt(MyString *str, int n)
@@ -233,76 +216,65 @@ MyStringRetVal myStringSetFromInt(MyString *str, int n)
 	{
 		return MYSTRING_ERROR;
 	}
-	Node* newNode = (Node*)malloc(sizeof(Node));
-	if (newNode == NULL)
+	if (n == 0) // SPECIAL CASE: n == 0
 	{
-		return MYSTRING_ERROR;
-	}
-	newNode->_numOfStr = 1;
-	if (n == 0)
-	{
-		newNode->_len = 1;
-		newNode->_str = (char*)malloc(sizeof(char));
-		if (newNode->_str == NULL)
+		if (strAlloc(&(str->_str), 1) == MYSTRING_ERROR)
 		{
-			free(newNode);
 			return MYSTRING_ERROR;
 		}
-		*(newNode->_str) = digToChar(0);
-		str->_data = newNode;
+		str->_len = 1;
+		*(str->_str) = ZERO_CHAR;
 		return MYSTRING_SUCCESS;
-	}
+	} // END OF n == 0
 	size_t i = 1, len = 0;
 	while (n / i != 0)
 	{
 		i *= INT_BASE;
 		len++;
 	}
-	char* newStr;
 	if (n < 0)
 	{
 		len++;	
 	}
-	newStr = (char*)malloc(sizeof(char) * len);
-	if (newStr == NULL)
+	if (strAlloc(&(str->_str), len) == MYSTRING_ERROR)
 	{
-		free(newNode);
 		return MYSTRING_ERROR;
 	}
 	int j = 0;
 	if (n < 0)
 	{
-		newStr[j] = MINUS_SIGN;
+		str->_str[j] = MINUS_SIGN;
 		j++;
 		n = -n;
 	}
 	for (; j < len; j++)
 	{
 		i /= INT_BASE;
-		newStr[j] = digToChar(n / i);
+		str->_str[j] = digToChar(n / i);
 		n %= i;
 	}
-	newNode->_len = len;
-	newNode->_str = newStr;
-	freeNode(str->_data);
-	str->_data = newNode;
+	str->_len = len;
+	return MYSTRING_SUCCESS;
 }
 
 int myStringToInt(const MyString *str)
 {
+	if (str == NULL || str->_str == NULL)
+	{
+		return MYSTR_ERROR_CODE;
+	}
 	int total = 0, charValue, i = 0;
 	bool isNegative = false;
-	Node* node = str->_data;
-	if (node->_str[i] == MINUS_SIGN)
+	if (str->_str[i] == MINUS_SIGN)
 	{
 		isNegative = true;
 		i++;
 	}
-	for (; i < node->_len; i++)
+	for (; i < str->_len; i++)
 	{
-		if (charValue = charToDig(node->_str[i]) != MYSTR_ERROR_CODE)
+		if (charValue = charToDig(str->_str[i]) != MYSTR_ERROR_CODE)
 		{
-			total += charValue * pow(INT_BASE, node->_len - i - 1);
+			total += charValue * pow(INT_BASE, str->_len - i - 1);
 		}
 		else
 		{
@@ -318,17 +290,17 @@ int myStringToInt(const MyString *str)
 
 char * myStringToCString(const MyString *str)
 {
-	if (str == NULL || str->_data == NULL)
+	if (str == NULL)
 	{
 		return NULL;
 	}
-	char* newStr = (char*)malloc(sizeof(char) * (str->_data->_len + 1)); // + 1 for EOS
+	char* newStr = (char*)malloc(sizeof(char) * (str->_len + 1)); // + 1 for EOS
 	if (newStr != NULL)
 	{
 		int i = 0;
-		for (; i < str->_data->_len; i++)
+		for (; i < str->_len; i++)
 		{
-			newStr[i] = str->_data->_str[i];
+			newStr[i] = str->_str[i];
 		}
 		newStr[i] = EOS;
 	}
@@ -337,66 +309,131 @@ char * myStringToCString(const MyString *str)
 
 MyStringRetVal myStringCat(MyString * dest, const MyString * src)
 {
-	Node* newNode = (Node*)malloc(sizeof(Node));
-	if (newNode == NULL)
+	size_t newLen = dest->_len + src->_len;
+	// Reallocate memory for the combined string.
+	char* temp = dest->_str;
+	dest->_str = (char*)realloc(dest->_str, sizeof(char) * newLen);
+	if (dest->_str == NULL)
 	{
+		dest->_str = temp;
 		return MYSTRING_ERROR;
 	}
-	newNode->_numOfStr = 1;
-	newNode->_len = dest->_data->_len + src->_data->_len;
-	char* newStr = (char*)malloc(sizeof(char) * newNode->_len);
-	if (newStr == NULL)
+	free(temp);
+	temp = NULL;
+	// Start to copy (str2 to end of str1)
+	for (int i = 0; i < src->_len; i++)
 	{
-		free(newNode);
-		return MYSTRING_ERROR;
+		dest->_str[dest->_len + i] = src->_str[i];
 	}
-	for (int i = 0; i < dest->_data->_len; i++)
-	{
-		newStr[i] = dest->_data->_str[i];
-	}
-	for (int i = 0; i < src->_data->_len; i++)
-	{
-		newStr[dest->_data->_len + i] = src->_data->_str[i];
-	}
-	newNode->_str = newStr;
-	freeNode(dest->_data);
-	dest->_data = newNode;
+	dest->_len = newLen;
+	return MYSTRING_SUCCESS;
 }
 
 MyStringRetVal myStringCatTo(const MyString *str1, const MyString *str2, MyString *result)
 {
-
+	if (result == NULL || str1 == NULL || str2 == NULL)
+	{
+		return MYSTRING_ERROR;
+	}
+	size_t newLen = str1->_len + str2->_len;
+	if (result->_len < newLen)
+	{ // if the dest. size is too small, allocate a new MyString
+		myStringFree(result);
+		if ((result = myStringClone(str1)) != NULL) // Clone the str1
+		{
+			return myStringCat(result, str2); // Then use regular cat to append str2
+		}
+		else
+		{
+			return MYSTRING_ERROR;
+		}
+	} 
+	else // This means the result size is OK
+	{
+		for (int i = 0; i < str1->_len; i++)
+		{
+			result->_str[i] = str1->_str[i];
+		}
+		for (int i = 0; i < str2->_len; i++)
+		{
+			result->_str[str1->_len + i] = str2->_str[i];
+		}
+		result->_len = newLen; // Try to reallocate the block because
+							   // It might be smaller now.
+		result->_str = (char*)realloc(result->_str, sizeof(char) * newLen);
+		return MYSTRING_SUCCESS;
+	}
 }
 
 int myStringCompare(const MyString *str1, const MyString *str2)
 {
-
+	return myStringCustomCompare(str1, str2, &defaultComparator); // Use custom compare with default comparator
 }
 
-//TODO insert myStringCustomCompare signature here
+int myStringCustomCompare(const MyString *str1, const MyString *str2,
+						  int(*comp)(const MyString*, const MyString*))
+{
+	if (str1 == NULL || str2 == NULL)
+	{ // Uncomparable strings
+		return MYSTR_ERROR_CODE;
+	}
+	return comp(str1, str2);
+}
 
 int myStringEqual(const MyString *str1, const MyString *str2)
 {
-
+	return myStringCustomEqual(str1, str2, defaultComparator);
 }
 
-//TODO insert myStringCustomEqual signature here
+int myStringCustomEqual(const MyString *str1, const MyString *str2,
+						int(*comp)(const MyString*, const MyString*))
+{
+	if (str1 == NULL || str2 == NULL)
+	{
+		return MYSTR_ERROR_CODE;
+	}
+	if (str1->_len != str2->_len)
+	{
+		return false;
+	}
+	// Note that true == 1 and false == 0 according to stdbool.h documentation
+	return myStringCustomCompare(str1, str2, comp) == 0 ? true : false;
+}
+
 
 unsigned long myStringMemUsage(const MyString *str1)
 {
-
+	// The size of the struct MyString + the size allocated for the chars
+	return (str1->_len * sizeof(char)) + sizeof(MyString);
 }
 
 unsigned long myStringLen(const MyString *str1)
 {
-	return str1->_data->_len;
+	return str1->_len; // Hmm...
 }
 
 MyStringRetVal myStringWrite(const MyString *str, FILE *stream)
 {
-
+	if (str == NULL)
+	{
+		return MYSTRING_ERROR;
+	}
+	for (int i = 0; i < str->_len; i++)
+	{
+		if (fputc(str->_str[i], stream) == EOF) // EOF means the writing failed.
+		{
+			return MYSTRING_ERROR;
+		}
+	}
+	return MYSTRING_SUCCESS;
 }
 
-//TODO insert myStringCoustomSort signature here
+void myStringCustomSort(MyString* arr[], int len, int (*comp)(const MyString*, const MyString*))
+{
+	qsort(arr, len, sizeof(MyString*), comp);
+}
 
-//TODO insert myStringSort signature here
+void myStringSort(MyString* arr[], int len)
+{
+	myStringCustomSort(arr, len, defaultComparator);
+}

@@ -198,8 +198,8 @@ int myStringCompare(const MyString *str1, const MyString *str2);
  * 	And a value less than zero indicates the opposite.
  * 	If strings cannot be compared, the return value should be MYSTR_ERROR_CODE
  */
-
- //TODO insert myStringCustomCompare signature here
+int myStringCustomCompare(const MyString *str1, const MyString *str2,
+					      int (*comp)(const MyString*, const MyString*));
  
 
 
@@ -228,7 +228,8 @@ int myStringEqual(const MyString *str1, const MyString *str2);
  * 	A greater than zero value indicates that the strings are equal.
  * 	If string cannot be compared, the return value should be MYSTR_ERROR_CODE
  */
-//TODO insert myStringCustomEqual signature here
+int myStringCustomEqual(const MyString *str1, const MyString *str2, 
+						int (*comp)(const MyString*, const MyString*));
  
 
 /**
@@ -257,7 +258,7 @@ MyStringRetVal myStringWrite(const MyString *str, FILE *stream);
  * 
  * RETURN VALUE:none
   */
-//TODO insert myStringCoustomSort signature here
+void myStringCustomSort(MyString* arr[], int len, int (*comp)(const MyString*, const MyString*));
  
 /**
  * @brief sorts an array of MyString pointers according to the default comparison (like in myStringCompare)
@@ -266,7 +267,7 @@ MyStringRetVal myStringWrite(const MyString *str, FILE *stream);
  *
  * RETURN VALUE: none
   */
-//TODO insert myStringSort signature here
+void myStringSort(MyString* arr[], int len);
  
 
 #endif // _MYSTRING_H
