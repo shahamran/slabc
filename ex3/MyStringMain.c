@@ -33,8 +33,10 @@ static void test1(const char* fileName)
 	{
 		smaller = b; bigger = a;
 	}
-	fprintf(inFile, "%s is smaller than %s\n", 
-			myStringToCString(smaller), myStringToCString(bigger));
+	char *big   = myStringToCString(bigger),
+		 *small = myStringToCString(smaller);
+	fprintf(inFile, "%s is smaller than %s\n", small, big);
+	free(big);       free(small);
 	myStringFree(a); myStringFree(b);
 	fclose(inFile);
 }
