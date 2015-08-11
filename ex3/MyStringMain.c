@@ -1,33 +1,41 @@
 #include "MyString.h"
+
 #define MAX_INPUT_LENGTH 501
+#define WRITE_ONLY "w"
 #define FILE_NAME "test.out"
 
-char* getUserInput(const char* msg, char* dest)
+static char* getUserInput(const char* msg, char* dest)
 {
 	printf("%s\n", msg);
 	scanf("%s", dest);
 	return dest;
 }
 
-void test1(const char* fileName)
+static void test1(const char* fileName)
 {
-	FILE *inFile = fopen(fileName, "w");
+	FILE *inFile = fopen(fileName, WRITE_ONLY);
 	if (inFile == NULL)
 	{
 		printf("Problem with opening the file: %s\n", fileName);
 		return;
 	}
-	char A[MAX_INPUT_LENGTH];
-	char B[MAX_INPUT_LENGTH];
-	getUserInput("Enter string A:", A);
-	getUserInput("Enter string B:", B);
-	MyString *myA = myStringAlloc();
-	MyString *myB = myStringAlloc();
-	myStringSetFromCString(myA, A);
-	myStringSetFromCString(myB, B);
-	int compResult = myStringCompare(myA, myB);
-	char smaller[5];
-	smaller = compResult <
+	char userInput[MAX_INPUT_LENGTH];
+	MyString *a = myStringAlloc(), *b = myStringAlloc(),
+			 *smaller, *bigger;
+	myStringSetFromCString(a, getUserInput("Enter first string:", userInput));
+	myStringSetFromCString(b, getUserInput("Enter second string:", userInput));
+	int result = myStringCompare(a, b);
+	if (result <= 0)
+	{
+		smaller = a; bigger = b;
+	}
+	else
+	{
+		smaller = b; bigger = a;
+	}
+	fprintf(inFile, "%s is smaller than %s\n", 
+			myStringToCString(smaller), myStringToCString(bigger));
+	myStringFree(a); myStringFree(b);
 	fclose(inFile);
 }
 

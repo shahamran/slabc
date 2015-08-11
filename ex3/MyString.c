@@ -38,51 +38,45 @@ static int charToDig(char chr)
 	return charVal;
 }
 
-static int pow(int base, unsigned int powerVal)
+static int intPow(int base, unsigned int powerVal)
 {
 	if (powerVal == 0)
 	{
 		return 1;
 	}
 	int result = base;
-	for (int i = 1; i < powerVal; i++)
+	for (unsigned int i = 1; i < powerVal; i++)
 	{
 		result *= base;
 	}
 	return result;
 }
 
-static int defaultComparator(const MyString *str1, const MyString *str2)
+static int defaultComparator(const char c1, const char c2)
 {
-	if (str1 == NULL || str2 == NULL)
+	if (c1 == c2)
 	{
-		return MYSTR_ERROR_CODE;
-	}
-
-	if (str1->_len == str2->_len)
-	{ // If the string have the same size, compare chars
-		for (int i = 0; i < str1->_len; i++)
-		{
-			if (str1->_str[i] < str2->_str[i])
-			{
-				return LESSER;
-			}
-			else if (str1->_str[i] > str2->_str[i])
-			{
-				return GREATER;
-			}
-		}
 		return EQUAL;
 	}
+	else if (c1 < c2)
+	{
+		return LESSER;
+	}
 	else
-	{ // Otherwise, the longer string will be the greater one.
-		return str1->_len < str2->_len ? LESSER : GREATER;
+	{
+		return GREATER;
 	}
 }
 
 static MyStringRetVal strAlloc(char** dest, size_t strLen)
 {
-	char* temp = *dest;
+	if (strLen == 0)
+	{
+		free(*dest);
+		*dest = NULL;
+		return MYSTRING_SUCCESS;
+	}
+	char* temp = *dest; // save previous memory
 	*dest = (char*)malloc(sizeof(char) * strLen);
 	if (*dest == NULL)
 	{
@@ -100,7 +94,7 @@ static MyStringRetVal strAlloc(char** dest, size_t strLen)
 MyString * myStringAlloc()
 {
 	MyString* newString = (MyString*)malloc(sizeof(MyString));
-	if (!newString == NULL)
+	if (newString != NULL)
 	{ // These are the empty string values (that I chose).
 		newString->_len = 0;
 		newString->_str = NULL;
@@ -162,9 +156,9 @@ MyStringRetVal myStringFilter(MyString *str, bool (*filt)(const char *))
 	// Go over the string from the end to the start
 	for (int i = str->_len - 1; i >= 0; i--)
 	{
-		if (filt(str->_str[i]))
+		if (filt(&(str->_str[i])))
 		{ // If a char should be filtered, put the next char instead of it and decrease the length
-			if (i < str->_len - 1)
+			if (i < (int) (str->_len - 1))
 			{
 				str->_str[i] = str->_str[i + 1];
 			}
@@ -175,8 +169,11 @@ MyStringRetVal myStringFilter(MyString *str, bool (*filt)(const char *))
 	char* temp = str->_str;
 	str->_str = (char*)realloc(str->_str, str->_len); 
 	if (str->_str != NULL)
-	{
-		free(temp);
+	{ // If allocation moved the data to another block, free the old one.
+		if (str->_str != temp)
+		{
+			free(temp);
+		}		
 	}
 	else
 	{
@@ -240,7 +237,7 @@ MyStringRetVal myStringSetFromInt(MyString *str, int n)
 	{
 		return MYSTRING_ERROR;
 	}
-	int j = 0;
+	unsigned int j = 0;
 	if (n < 0)
 	{
 		str->_str[j] = MINUS_SIGN;
@@ -263,7 +260,8 @@ int myStringToInt(const MyString *str)
 	{
 		return MYSTR_ERROR_CODE;
 	}
-	int total = 0, charValue, i = 0;
+	int total = 0, charValue;
+	unsigned int i = 0;
 	bool isNegative = false;
 	if (str->_str[i] == MINUS_SIGN)
 	{
@@ -272,9 +270,9 @@ int myStringToInt(const MyString *str)
 	}
 	for (; i < str->_len; i++)
 	{
-		if (charValue = charToDig(str->_str[i]) != MYSTR_ERROR_CODE)
+		if ((charValue = charToDig(str->_str[i])) != MYSTR_ERROR_CODE)
 		{
-			total += charValue * pow(INT_BASE, str->_len - i - 1);
+			total += charValue * intPow(INT_BASE, str->_len - i - 1);
 		}
 		else
 		{
@@ -297,7 +295,7 @@ char * myStringToCString(const MyString *str)
 	char* newStr = (char*)malloc(sizeof(char) * (str->_len + 1)); // + 1 for EOS
 	if (newStr != NULL)
 	{
-		int i = 0;
+		unsigned int i = 0;
 		for (; i < str->_len; i++)
 		{
 			newStr[i] = str->_str[i];
@@ -312,16 +310,20 @@ MyStringRetVal myStringCat(MyString * dest, const MyString * src)
 	size_t newLen = dest->_len + src->_len;
 	// Reallocate memory for the combined string.
 	char* temp = dest->_str;
+	
 	dest->_str = (char*)realloc(dest->_str, sizeof(char) * newLen);
 	if (dest->_str == NULL)
 	{
 		dest->_str = temp;
 		return MYSTRING_ERROR;
 	}
-	free(temp);
+	if (temp != dest->_str)
+	{
+		free(temp);
+	}
 	temp = NULL;
 	// Start to copy (str2 to end of str1)
-	for (int i = 0; i < src->_len; i++)
+	for (unsigned int i = 0; i < src->_len; i++)
 	{
 		dest->_str[dest->_len + i] = src->_str[i];
 	}
@@ -350,11 +352,11 @@ MyStringRetVal myStringCatTo(const MyString *str1, const MyString *str2, MyStrin
 	} 
 	else // This means the result size is OK
 	{
-		for (int i = 0; i < str1->_len; i++)
+		for (unsigned int i = 0; i < str1->_len; i++)
 		{
 			result->_str[i] = str1->_str[i];
 		}
-		for (int i = 0; i < str2->_len; i++)
+		for (unsigned int i = 0; i < str2->_len; i++)
 		{
 			result->_str[str1->_len + i] = str2->_str[i];
 		}
@@ -371,27 +373,45 @@ int myStringCompare(const MyString *str1, const MyString *str2)
 }
 
 int myStringCustomCompare(const MyString *str1, const MyString *str2,
-						  int(*comp)(const MyString*, const MyString*))
+						  int (*comp)(const char, const char))
 {
 	if (str1 == NULL || str2 == NULL)
 	{ // Uncomparable strings
 		return MYSTR_ERROR_CODE;
+	} // Check all chars of the smaller string to see if there's a difference
+	for (unsigned int i = 0; i < str1->_len && str2->_len; i++)
+	{
+		if (comp(str1->_str[i], str2->_str[i]) < EQUAL)
+		{
+			return LESSER;
+		}
+		else if (comp(str1->_str[i], str2->_str[i]) > EQUAL)
+		{
+			return GREATER;
+		}
+	} // If this is reached, the chars on both strings match until the end of ther shorter
+	if (str1->_len == str2->_len)
+	{ // If they share the same length, they are therefore equal.
+		return EQUAL;
 	}
-	return comp(str1, str2);
+	else
+	{ // Otherwise, the longer is the larger (since EVERY_CHAR > NULL)
+		return str1->_len < str2->_len ? LESSER : GREATER;
+	}
 }
 
 int myStringEqual(const MyString *str1, const MyString *str2)
 {
-	return myStringCustomEqual(str1, str2, defaultComparator);
+	return myStringCustomEqual(str1, str2, &defaultComparator);
 }
 
 int myStringCustomEqual(const MyString *str1, const MyString *str2,
-						int(*comp)(const MyString*, const MyString*))
+						int(*comp)(const char, const char))
 {
 	if (str1 == NULL || str2 == NULL)
 	{
 		return MYSTR_ERROR_CODE;
-	}
+	} // Different lengths are not equal.
 	if (str1->_len != str2->_len)
 	{
 		return false;
@@ -418,7 +438,7 @@ MyStringRetVal myStringWrite(const MyString *str, FILE *stream)
 	{
 		return MYSTRING_ERROR;
 	}
-	for (int i = 0; i < str->_len; i++)
+	for (unsigned int i = 0; i < str->_len; i++)
 	{
 		if (fputc(str->_str[i], stream) == EOF) // EOF means the writing failed.
 		{
@@ -428,12 +448,225 @@ MyStringRetVal myStringWrite(const MyString *str, FILE *stream)
 	return MYSTRING_SUCCESS;
 }
 
-void myStringCustomSort(MyString* arr[], int len, int (*comp)(const MyString*, const MyString*))
+
+void myStringCustomSort(MyString* arr[], int len, int (*comp)(const char, const char))
 {
-	qsort(arr, len, sizeof(MyString*), comp);
+	int strCompare(const void* a, const void* b)
+	{
+		return myStringCustomCompare((MyString*) a, (MyString*) b, comp);
+	}
+	qsort(arr, (size_t) len, sizeof(MyString*), strCompare);
 }
 
 void myStringSort(MyString* arr[], int len)
 {
-	myStringCustomSort(arr, len, defaultComparator);
+	myStringCustomSort(arr, len, &defaultComparator);
 }
+
+#ifndef NDEBUG
+
+// ------------------------ Unit-testing --------------------------------
+
+bool testAlloc()
+{
+	MyString* a = myStringAlloc();
+	if (a == NULL)
+	{
+		printf("Could not allocate memory for one MyString object\n");
+		return false;
+	}
+	myStringFree(a);
+	return true;
+}
+
+bool testFree()
+{
+	return true;
+}
+
+bool testClone()
+{
+	MyString * s1 = myStringAlloc();
+	MyString * s2 = myStringClone(s1);
+	if (s2 == NULL)
+	{
+		printf("Could not allocate memory for a clone\n");
+		myStringFree(s1);
+		return false;
+	}
+	myStringFree(s1);
+	myStringFree(s2);
+	return true;
+}
+
+bool testSetFromMyString()
+{
+	MyString *s1 = myStringAlloc(), *s2 = myStringAlloc();
+	MyStringRetVal ret = myStringSetFromMyString(s2, s1);
+	if (ret == MYSTRING_ERROR)
+	{
+		printf("Failed to set MyString from another\n");
+		myStringFree(s1);
+		myStringFree(s2);
+		return false;
+	}
+	myStringFree(s1);
+	myStringFree(s2);
+	return true;
+}
+
+bool testStringFilter()
+{
+	bool filt(const char* ch)
+	{
+		return (*ch == 'o' || *ch == '!');
+	}
+	char* something = (char*)malloc(sizeof(char)*7);
+	if (something == NULL)
+		return false;
+	something[0] = 'H'; something[1] = 'e'; something[2] = 'l';
+	something[3] = 'l'; something[4] = 'o'; something[5] = '!'; something[6] = '\0';
+	char *before = "Hello!";
+	MyString *str = myStringAlloc();
+	str->_len = 7;
+	str->_str = something;
+	MyStringRetVal ret = myStringFilter(str, filt);
+	if (ret == MYSTRING_ERROR)
+	{
+		printf("Failed to filter string\n");
+		myStringFree(str);
+		return false;
+	}
+	myStringFree(str);
+	return true;
+}
+
+bool testSetFromCString()
+{
+	char* cString = "Hello!";
+	MyString *str = myStringAlloc(); 
+	MyStringRetVal ret = myStringSetFromCString(str, cString);
+	myStringFree(str);
+	if (ret == MYSTRING_ERROR)
+	{
+		printf("Failed to set string from C string: %s\n", cString);
+		return false;
+	}
+	return true;
+}
+
+bool testSetFromInt()
+{
+	int myInt = 1908; // The year of Kinneret Moshava founding
+	MyString *str = myStringAlloc();
+	MyStringRetVal ret = myStringSetFromInt(str, myInt);
+	myStringFree(str);
+	if (ret == MYSTRING_ERROR)
+	{
+		printf("Failed to set string from int: %d\n", myInt);
+		return false;
+	}
+	return true;
+}
+
+bool testStringToInt()
+{
+	return true;
+}
+
+bool testStringToCString()
+{
+	return true;
+}
+
+bool testCat()
+{
+	return true;
+}
+
+bool testCatTo()
+{
+	return true;
+}
+
+bool testCompare()
+{
+	return true;
+}
+
+bool testCustomCompare()
+{
+	return true;
+}
+
+bool testEqual()
+{
+	return true;
+}
+
+bool testCustomEqual()
+{
+	return true;
+}
+
+bool testMemUsage()
+{
+	return true;
+}
+
+bool testLen()
+{
+	return true;
+}
+
+bool testWrite()
+{
+	return true;
+}
+
+bool testCustomSort()
+{
+	return true;
+}
+
+bool testSort()
+{
+	return true;
+}
+
+void runTest(char* testName, bool (*test)(void))
+{
+	printf("RUNNING TEST: %s\n", testName);
+	if (!(*test)())
+	{
+		printf("TEST: %s FAILED!\n", testName);
+	}
+}
+
+int main()
+{
+	runTest("MY STRING ALLOC", testAlloc);
+	runTest("MY STRING FREE", testFree);
+	runTest("CLONE", testClone);
+	runTest("SET FROM MY STRING", testSetFromMyString);
+	runTest("MY STRING FILTER", testStringFilter);
+	runTest("SET FROM C STRING", testSetFromCString);
+	runTest("SET FROM INT", testSetFromInt);
+	runTest("MY STRING TO INT", testStringToInt);
+	runTest("MY STRING TO C STRING", testStringToCString);
+	runTest("MY STRING CAT", testCat);
+	runTest("MY STRING CAT TO", testCatTo);
+	runTest("COMPARE", testCompare);
+	runTest("CUSTOM COMPARE", testCustomCompare);
+	runTest("EQUAL", testEqual);
+	runTest("CUSTOM EQUAL", testCustomEqual);
+	runTest("MEMORY USAGE", testMemUsage);
+	runTest("STRING LENGTH", testLen);
+	runTest("WRITE TO FILE", testWrite);
+	runTest("CUSTOM SORT", testCustomSort);
+	runTest("SORT", testSort);
+	
+	return 0;
+}
+
+#endif

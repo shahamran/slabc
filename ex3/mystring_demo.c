@@ -29,10 +29,10 @@ void test1()
 	
 	if (res != 0) 
 	{
+        myStringFree(s1);
+        myStringFree(s2);
         exitBad(1);
-    
     }
-
     myStringFree(s1);
     myStringFree(s2);
 }
@@ -54,11 +54,11 @@ void test2()
     myStringCat(high, low);
 	if (myStringToInt(high) != 105) 
 	{
+         // clean up. 
+        myStringFree(high);
+        myStringFree(low);
         exitBad(1);
     }
-	
-
-    // clean up. 
     myStringFree(high);
     myStringFree(low);
 }
@@ -66,7 +66,7 @@ void test2()
 /**
 *
 */
-int main(int argc, char *argv[])
+int main()
 {
     test1();
     test2();
