@@ -31,5 +31,8 @@
     <None Include="..\Makefile">
       <Filter>Resource Files</Filter>
     </None>
+    <None Include="..\README">
+      <Filter>Resource Files</Filter>
+    </None>
   </ItemGroup>
 </Project>

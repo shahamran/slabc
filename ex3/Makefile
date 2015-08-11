@@ -1,9 +1,9 @@
 CC = c99
-C_FLAGS = -Wvla -Wextra -Wall -g -DNDEBUG
+C_FLAGS = -Wvla -Wextra -Wall -g
 
-tests: MyStringMain
+tests: MyStringTests
 	./MyStringMain
-MyStringMain: libmyString.a MyStringMain.o
+MyStringTests: libmyString.a MyStringMain.o
 	${CC} ${C_FLAGS} MyStringMain.o -L. -lmyString -o MyStringMain
 MyStringMain.o: MyStringMain.c
 	${CC} ${C_FLAGS} -c -I. MyStringMain.c -o MyStringMain.o

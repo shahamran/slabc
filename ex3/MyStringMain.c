@@ -3,6 +3,9 @@
 #define MAX_INPUT_LENGTH 501
 #define WRITE_ONLY "w"
 #define FILE_NAME "test.out"
+#define SUCCESS 0
+#define FAILURE 1
+#define EQUAL 0
 
 static char* getUserInput(const char* msg, char* dest)
 {
@@ -11,38 +14,48 @@ static char* getUserInput(const char* msg, char* dest)
 	return dest;
 }
 
-static void test1(const char* fileName)
+static int test1(const char* fileName)
 {
 	FILE *inFile = fopen(fileName, WRITE_ONLY);
 	if (inFile == NULL)
 	{
 		printf("Problem with opening the file: %s\n", fileName);
-		return;
+		return FAILURE;
 	}
-	char userInput[MAX_INPUT_LENGTH];
-	MyString *a = myStringAlloc(), *b = myStringAlloc(),
-			 *smaller, *bigger;
+	char userInput[MAX_INPUT_LENGTH], *big, *small;
+	MyString *a = myStringAlloc(),
+			 *b = myStringAlloc();
+
 	myStringSetFromCString(a, getUserInput("Enter first string:", userInput));
 	myStringSetFromCString(b, getUserInput("Enter second string:", userInput));
+
 	int result = myStringCompare(a, b);
-	if (result <= 0)
+	if (result == MYSTR_ERROR_CODE)
+	{ // If an error has occured, clean up and quit.
+		myStringFree(a); myStringFree(b);
+		fclose(inFile);
+		return FAILURE;
+	}
+	if (result <= EQUAL)
 	{
-		smaller = a; bigger = b;
+		big   = myStringSetToCString(b);
+		small = myStringSetToCString(a);
 	}
 	else
 	{
-		smaller = b; bigger = a;
-	}
-	char *big   = myStringToCString(bigger),
-		 *small = myStringToCString(smaller);
+		big   = myStringSetToCString(a);
+		small = myStringSetToCString(b);
+	} // Write to file
 	fprintf(inFile, "%s is smaller than %s\n", small, big);
+
+	// Cleanup
 	free(big);       free(small);
 	myStringFree(a); myStringFree(b);
 	fclose(inFile);
+	return SUCCESS;
 }
 
 int main()
 {
-	test1(FILE_NAME);
-	return 0;
+	return test1(FILE_NAME);
 }

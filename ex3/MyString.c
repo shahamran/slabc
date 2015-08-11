@@ -463,35 +463,62 @@ void myStringSort(MyString* arr[], int len)
 	myStringCustomSort(arr, len, &defaultComparator);
 }
 
-#ifndef NDEBUG
-
 // ------------------------ Unit-testing --------------------------------
+
+#ifndef NDEBUG
 
 bool testAlloc()
 {
 	MyString* a = myStringAlloc();
 	if (a == NULL)
 	{
-		printf("Could not allocate memory for one MyString object\n");
+		printf("Could not allocate memory for a MyString object\n");
 		return false;
 	}
 	myStringFree(a);
 	return true;
 }
 
-bool testFree()
+// Not sure how to test the myStringFree() function.
+
+char* getHeapStr(char* str)
 {
-	return true;
+	int len = strlen(str) + 1; // + 1 for '\0'
+	char* dest = (char*)malloc(sizeof(char) * len);
+	if (dest != NULL)
+	{
+		for (int i = 0; i < len - 1; i++)
+		{
+			dest[i] = str[i];
+		}
+		dest[len - 1] = '\0';
+	}
+	return dest;
 }
 
 bool testClone()
 {
+	char* txt = getHeapStr("bye");
+	if (txt == NULL)
+	{
+		printf("Could not allocate memory for a string\n");
+		return false;
+	}
 	MyString * s1 = myStringAlloc();
+	s1->_len = 4; s1->_str = txt; // txt is bye (+ '\0')
 	MyString * s2 = myStringClone(s1);
 	if (s2 == NULL)
 	{
 		printf("Could not allocate memory for a clone\n");
 		myStringFree(s1);
+		return false;
+	}
+	if (strcmp(s1->_str, s2->_str) != 0)
+	{
+		printf("Didn't clone the right values.\n source: %s\tdest: %s\n",
+			   s1->_str, s2->_str);
+		myStringFree(s1);
+		myStringFree(s2);
 		return false;
 	}
 	myStringFree(s1);
@@ -503,37 +530,43 @@ bool testSetFromMyString()
 {
 	MyString *s1 = myStringAlloc(), *s2 = myStringAlloc();
 	MyStringRetVal ret = myStringSetFromMyString(s2, s1);
+	myStringFree(s1);
+	myStringFree(s2);
 	if (ret == MYSTRING_ERROR)
 	{
 		printf("Failed to set MyString from another\n");
-		myStringFree(s1);
-		myStringFree(s2);
 		return false;
 	}
-	myStringFree(s1);
-	myStringFree(s2);
 	return true;
 }
 
 bool testStringFilter()
 {
-	bool filt(const char* ch)
+	bool filt(const char* ch) // Toy filter function
 	{
 		return (*ch == 'o' || *ch == '!');
 	}
-	char* something = (char*)malloc(sizeof(char)*7);
-	if (something == NULL)
+	char *ORIGINAL = "Hello!", *EXPECTED = "Hell";
+	char* txt = getHeapStr(ORIGINAL);
+	if (txt == NULL)
+	{
+		printf("Could not allocate memory for a string\n");
 		return false;
-	something[0] = 'H'; something[1] = 'e'; something[2] = 'l';
-	something[3] = 'l'; something[4] = 'o'; something[5] = '!'; something[6] = '\0';
-	char *before = "Hello!";
+	}	
 	MyString *str = myStringAlloc();
 	str->_len = 7;
-	str->_str = something;
+	str->_str = txt;
 	MyStringRetVal ret = myStringFilter(str, filt);
 	if (ret == MYSTRING_ERROR)
 	{
 		printf("Failed to filter string\n");
+		myStringFree(str);
+		return false;
+	}
+	if (strcmp(str->_str, EXPECTED) != 0)
+	{
+		printf("Error in filter.\n Expected: %s \t Got: %s\n",
+			   EXPECTED, str->_str);
 		myStringFree(str);
 		return false;
 	}
@@ -560,42 +593,162 @@ bool testSetFromInt()
 	int myInt = 1908; // The year of Kinneret Moshava founding
 	MyString *str = myStringAlloc();
 	MyStringRetVal ret = myStringSetFromInt(str, myInt);
-	myStringFree(str);
 	if (ret == MYSTRING_ERROR)
 	{
 		printf("Failed to set string from int: %d\n", myInt);
+		myStringFree(str);
 		return false;
 	}
+	char* cString = myStringToCString(str);
+	if (atoi(cString) != myInt)
+	{
+		printf("Error converting from int.\nExpected %d \t Got: %d\n",
+			   myInt, atoi(cString));
+		free(cString);
+		myStringFree(str);
+		return false;
+	}
+	free(cString);
+	myStringFree(str);
 	return true;
 }
 
 bool testStringToInt()
 {
+	char* intStr = malloc(sizeof(char) * 4);
+	if (intStr == NULL)
+	{
+		printf("Could not allocate memory for a string\n");
+		return false;
+	}
+	intStr[0] = '1'; intStr[1] = '9';
+	intStr[2] = '0'; intStr[3] = '8';
+	MyString *str = myStringAlloc();
+	str->_len = 4;
+	str->_str = intStr;
+	if (myStringToInt(str) != atoi(intStr))
+	{
+		printf("Error converting to int.\nExpected %d \t Got: %d\n",
+			   1908, myStringToInt(str));
+		myStringFree(str);
+		return false;
+	}
+	myStringFree(str);
 	return true;
 }
 
 bool testStringToCString()
 {
+	char* txt = (char*)malloc(sizeof(char) * 6);
+	if (txt == NULL)
+	{
+		printf("Could not allocate memory for a string\n");
+		return false;
+	}
+	txt[0] = 'b'; txt[1] = 'l'; txt[2] = 'a';
+	txt[3] = 'l'; txt[4] = 'a'; txt[5] = 'b';
+	MyString *str = myStringAlloc();
+	str->_len = 6;
+	str->_str = txt;
+	char* cString = myStringToCString(str);
+	myStringFree(str);
+	if (strcmp(cString, "blalab") != 0)
+	{
+		printf("Error converting to C String.\nExpected %s \t Got: %s\n",
+			   "blalab", cString);
+		free(cString);
+		return false;
+	}
+	free(cString);
 	return true;
 }
 
 bool testCat()
 {
+	char *txt1 = "Hello ", *txt2 = "World!", *EXPECTED = "Hello World!";
+	MyString *s1 = myStringAlloc(),
+		     *s2 = myStringAlloc();
+	myStringSetFromCString(s1, txt1);
+	myStringSetFromCString(s2, txt2);
+	MyStringRetVal result = myStringCat(s1, s2);
+	if (result == MYSTR_ERROR_CODE)
+	{
+		printf("Failed appending \"%s\" to \"%s\"\n", txt2, txt1);
+		myStringFree(s1); myStringFree(s2);
+		return false;
+	}
+	if (strcmp(EXPECTED, myStringToCString(s1)) != 0)
+	{
+		printf("Failed appending \"%s\" to \"%s\"\n", txt2, txt1);
+		printf("Expected:\"%s\" \t Got:\"%s\"\n", EXPECTED, myStringToCString(s1));
+		myStringFree(s1); myStringFree(s2);
+		return false;
+	}
+	myStringFree(s1); myStringFree(s2);
 	return true;
 }
 
 bool testCatTo()
 {
-	return true;
-}
-
-bool testCompare()
-{
+	char *txt1 = "Hello ", *txt2 = "World!", *EXPECTED = "Hello World!";
+	MyString *s1 = myStringAlloc(),
+		     *s2 = myStringAlloc(),
+		     *s3 = myStringAlloc();
+	myStringSetFromCString(s1, txt1);
+	myStringSetFromCString(s2, txt2);
+	if (myStringCatTo(s1, s2, s3) == MYSTRING_ERROR)
+	{
+		printf("Failed appending \"%s\" to \"%s\"\n", txt2, txt1);
+		myStringFree(s1); myStringFree(s2); myStringFree(s3);
+		return false;
+	}
+	if (strcmp(EXPECTED, myStringToCString(s3)) != 0)
+	{
+		printf("Failed appending \"%s\" to \"%s\"\n", txt2, txt1);
+		printf("Expected:\"%s\" \t Got:\"%s\"\n", EXPECTED, myStringToCString(s3));
+		myStringFree(s1); myStringFree(s2); myStringFree(s3);
+		return false;
+	}
+	myStringFree(s1); myStringFree(s2); myStringFree(s3);
 	return true;
 }
 
 bool testCustomCompare()
 {
+	int comp(const char a, const char b)
+	{ // Toy comparator for chars. Checks if the chars are close enough on the ascii table.
+		int EPSILON = 3;
+		if (a - b <= EPSILON && a - b >= -EPSILON)
+		{
+			return 0;
+		}
+		else if (a - b > EPSILON)
+		{
+			return 1;
+		}
+		else
+		{
+			return -1;
+		}
+	}
+	MyString *s1 = myStringAlloc(),
+		     *s2 = myStringAlloc();
+	myStringSetFromInt(s1, 92);
+	myStringSetFromInt(s2, 70);
+	int result = myStringCustomCompare(s1, s2, &comp);
+	if (result == MYSTR_ERROR_CODE)
+	{
+		printf("Function reported an error.\n");
+		myStringFree(s1); myStringFree(s2);
+		return false;
+	}
+	if (result != 0)
+	{
+		printf("Error comparing using custom compare.\n");
+		printf("Expected 0 \t Got %d\n", result);
+		myStringFree(s1); myStringFree(s2);
+		return false;
+	}
 	return true;
 }
 
@@ -636,36 +789,40 @@ bool testSort()
 
 void runTest(char* testName, bool (*test)(void))
 {
+	char *result = "SUCCEEDED";
 	printf("RUNNING TEST: %s\n", testName);
 	if (!(*test)())
 	{
-		printf("TEST: %s FAILED!\n", testName);
+		printf("--------------\n");
+		result = "FAILED";
 	}
+	printf("%s!\n", result);
 }
 
 int main()
 {
-	runTest("MY STRING ALLOC", testAlloc);
-	runTest("MY STRING FREE", testFree);
-	runTest("CLONE", testClone);
-	runTest("SET FROM MY STRING", testSetFromMyString);
-	runTest("MY STRING FILTER", testStringFilter);
-	runTest("SET FROM C STRING", testSetFromCString);
-	runTest("SET FROM INT", testSetFromInt);
-	runTest("MY STRING TO INT", testStringToInt);
-	runTest("MY STRING TO C STRING", testStringToCString);
-	runTest("MY STRING CAT", testCat);
-	runTest("MY STRING CAT TO", testCatTo);
-	runTest("COMPARE", testCompare);
-	runTest("CUSTOM COMPARE", testCustomCompare);
-	runTest("EQUAL", testEqual);
-	runTest("CUSTOM EQUAL", testCustomEqual);
-	runTest("MEMORY USAGE", testMemUsage);
-	runTest("STRING LENGTH", testLen);
-	runTest("WRITE TO FILE", testWrite);
-	runTest("CUSTOM SORT", testCustomSort);
-	runTest("SORT", testSort);
-	
+	printf("Start unit-tests...\n");
+
+	runTest("myStringAlloc", testAlloc);
+	runTest("myStringClone", testClone);
+	runTest("myStringSetFromMyString", testSetFromMyString);
+	runTest("myStringFilter", testStringFilter);
+	runTest("myStringSetFromCString", testSetFromCString);
+	runTest("myStringSetFromInt", testSetFromInt);
+	runTest("myStringToInt", testStringToInt);
+	runTest("myStringToCString", testStringToCString);
+	runTest("myStringCat", testCat);
+	runTest("myStringCatTo", testCatTo);
+	runTest("myStringCustomCompare", testCustomCompare);
+	runTest("myStringEqual", testEqual);
+	runTest("myStringCustomEqual", testCustomEqual);
+	runTest("myStringMemUsage", testMemUsage);
+	runTest("myStringLen", testLen);
+	runTest("myStringWrite", testWrite);
+	runTest("myStringCustomSort", testCustomSort);
+	runTest("myStringSort", testSort);
+
+	printf("Finish unit-tests...\n");
 	return 0;
 }
 
