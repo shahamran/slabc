@@ -1,0 +1,13 @@
+Answers to questions:
+1. The disadvantages of implementing the struct _MyString in the
+header file is that this struct will be then closed to changes.
+The header defines the interface with which people work and when
+deciding what members a struct will have we are limiting the implementation
+possibilites for the whole program.
+For instance, our program could have been implemented using a reference counting
+design and the members MyString structs in that design are very different from
+my current implementation (I know, I tried...).
+2. The MyString.h file is a header file in a static library which means the include
+
+
+Valgrind Output:
