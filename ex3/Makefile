@@ -5,7 +5,7 @@ MY_STRING = MyString.c MyString.h
 LIB_OBJECTS = MyString.o
 LIB_NAME = libmyString.a
 VALGRIND_FLAGS = --leak-check=full --show-possibly-lost=yes --show-reachable=yes --undef-value-errors=yes
-TAR_OBJS = valdbg_MyStringMain valdbg_myStringTests Makefile MyStringMain.c ${MY_STRING} README
+TAR_OBJS = valdbg_MyStringMain valdbg_MyStringTests Makefile MyStringMain.c ${MY_STRING} README
 
 ex3.tar: ${TAR_OBJS}
 	tar -cvf ex3.tar ${TAR_OBJS} valdbg_MyStringMain
@@ -16,9 +16,9 @@ valdbg_MyStringMain: MyStringMain
 	chmod 777 MyStringMain
 	valgrind ${VALGRIND_FLAGS} ./MyStringMain >& valdbg_MyStringMain
 
-valdbg_myStringTests: MyStringTests
+valdbg_MyStringTests: MyStringTests
 	chmod 777 MyStringTests
-	valgrind ${VALGRIND_FLAGS} ./MyStringTests >& valdbg_myStringTests
+	valgrind ${VALGRIND_FLAGS} ./MyStringTests >& valdbg_MyStringTests
 
 tests: MyStringTests
 	./MyStringTests
