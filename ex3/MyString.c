@@ -172,14 +172,7 @@ MyStringRetVal myStringFilter(MyString *str, bool (*filt)(const char *))
 	// Try to resize the memory block, since the content may have gotten smaller
 	char* temp = str->_str;
 	str->_str = (char*)realloc(str->_str, str->_len); 
-	if (str->_str != NULL)
-	{ // If allocation moved the data to another block, free the old one.
-		if (str->_str != temp)
-		{
-			free(temp);
-		}		
-	}
-	else
+	if (str->_str == NULL)
 	{
 		str->_str = temp;
 	}
@@ -322,12 +315,6 @@ MyStringRetVal myStringCat(MyString * dest, const MyString * src)
 		dest->_str = temp;
 		return MYSTRING_ERROR;
 	}
-	// If the realloc moved the block to another place, free the old one.
-	if (temp != dest->_str)
-	{
-		free(temp);
-	}
-	temp = NULL;
 	// Start to copy (str2 to end of str1)
 	for (unsigned int i = 0; i < src->_len; i++)
 	{
