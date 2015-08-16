@@ -48,6 +48,6 @@ MyString.o: ${MY_STRING}
 # Cleaning
 
 clean:
-	rm -fv *.o *.gch MyStringMain MyStringTests *.out *.exe ${LIB_NAME}
+	rm -fv *.o *.gch MyStringMain MyStringTests *.out *.exe ${LIB_NAME} valdbg*
 
 .PHONY: clean
