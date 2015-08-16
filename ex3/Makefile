@@ -8,13 +8,13 @@ VALGRIND_FLAGS = --leak-check=full --show-possibly-lost=yes --show-reachable=yes
 TAR_OBJS = valdbg_MyStringMain valdbg_myStringTests Makefile MyStringMain.c ${MY_STRING} README
 
 ex3.tar: ${TAR_OBJS}
-	tar -cvf ex3.tar ${TAR_OBJS}
+	tar -cvf ex3.tar ${TAR_OBJS} valdbg_MyStringMain
 
 # Tests
 
 valdbg_MyStringMain: MyStringMain
 	chmod 777 MyStringMain
-	valgrind ${VALGRIND_FLAGS} ./MyStringMain >& valdbg_myStringMain
+	valgrind ${VALGRIND_FLAGS} ./MyStringMain >& valdbg_MyStringMain
 
 valdbg_myStringTests: MyStringTests
 	chmod 777 MyStringTests
