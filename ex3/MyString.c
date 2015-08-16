@@ -459,7 +459,7 @@ void myStringSort(MyString *arr[], int len)
 
 #ifndef NDEBUG
 
-#include <stdarg.h>
+#include <stdarg.h> // for freeAll function
 
 #define SEPARATOR "--------------------\n"
 #define MAX_LINE_LENGTH 150
@@ -642,7 +642,8 @@ bool testSetFromInt()
 
 bool testStringToInt()
 {
-	char* intStr = malloc(sizeof(char) * 4);
+	int len = 4, myInt = 1908;
+	char* intStr = malloc(sizeof(char) * len);
 	if (intStr == NULL)
 	{
 		printf("Could not allocate memory for a string\n");
@@ -651,22 +652,22 @@ bool testStringToInt()
 	intStr[0] = '1'; intStr[1] = '9';
 	intStr[2] = '0'; intStr[3] = '8';
 	MyString *str = myStringAlloc();
-	str->_len = 4;
+	str->_len = len;
 	str->_str = intStr;
-	if (myStringToInt(str) != atoi(intStr))
+	int result = myStringToInt(str);
+	myStringFree(str);
+	if (result != myInt)
 	{
-		printf("Error converting to int.\nExpected %d \t Got: %d\n",
-			   1908, myStringToInt(str));
-		myStringFree(str);
+		printf("Error converting to int.\nExpected %d \t Got: %d\n", 1908, result);
 		return false;
 	}
-	myStringFree(str);
 	return true;
 }
 
 bool testStringToCString()
 {
-	char* txt = (char*)malloc(sizeof(char) * 6);
+	int len = 6;
+	char* txt = (char*)malloc(sizeof(char) * len), *EXPECTED = "blalab";
 	if (txt == NULL)
 	{
 		printf("Could not allocate memory for a string\n");
@@ -679,10 +680,9 @@ bool testStringToCString()
 	str->_str = txt;
 	char* cString = myStringToCString(str);
 	myStringFree(str);
-	if (strcmp(cString, "blalab") != 0)
+	if (strcmp(cString, EXPECTED) != 0)
 	{
-		printf("Error converting to C String.\nExpected %s \t Got: %s\n",
-			   "blalab", cString);
+		printf("Error converting to C String.\nExpected %s \t Got: %s\n", EXPECTED, cString);
 		free(cString);
 		return false;
 	}
@@ -731,14 +731,14 @@ bool testCatTo()
 		return false;
 	}
 	char *actual = myStringToCString(s3);
+	freeAll(3, s1, s2, s3);
 	if (strcmp(EXPECTED, actual) != 0)
 	{
 		printf("Failed appending \"%s\" to \"%s\"\n", txt2, txt1);
 		printf("Expected:\"%s\" \t Got:\"%s\"\n", EXPECTED, actual);
-		freeAll(3, s1, s2, s3); free(actual);
+		free(actual);
 		return false;
 	}
-	freeAll(3, s1, s2, s3);
 	free(actual);
 	return true;
 }
