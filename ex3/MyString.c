@@ -467,6 +467,43 @@ void myStringSort(MyString* arr[], int len)
 
 #ifndef NDEBUG
 
+#define EOS '\0' // End-of-String
+#define SEPARATOR "--------------------\n"
+
+// Not sure how to test the myStringFree() function.
+
+static int customComp(const char a, const char b)
+{ // Toy comparator for chars. Checks if the chars are close enough on the ascii table.
+	int EPSILON = 3;
+	if (a - b <= EPSILON && a - b >= -EPSILON)
+	{
+		return EQUAL;
+	}
+	else if (a - b > EPSILON)
+	{
+		return GREATER;
+	}
+	else
+	{
+		return LESSER;
+	}
+}
+
+static char* getHeapStr(char* str)
+{
+	int len = strlen(str) + 1; // + 1 for '\0'
+	char* dest = (char*)malloc(sizeof(char) * len);
+	if (dest != NULL)
+	{
+		for (int i = 0; i < len - 1; i++)
+		{
+			dest[i] = str[i];
+		}
+		dest[len - 1] = EOS;
+	}
+	return dest;
+}
+
 bool testAlloc()
 {
 	MyString* a = myStringAlloc();
@@ -477,23 +514,6 @@ bool testAlloc()
 	}
 	myStringFree(a);
 	return true;
-}
-
-// Not sure how to test the myStringFree() function.
-
-char* getHeapStr(char* str)
-{
-	int len = strlen(str) + 1; // + 1 for '\0'
-	char* dest = (char*)malloc(sizeof(char) * len);
-	if (dest != NULL)
-	{
-		for (int i = 0; i < len - 1; i++)
-		{
-			dest[i] = str[i];
-		}
-		dest[len - 1] = '\0';
-	}
-	return dest;
 }
 
 bool testClone()
@@ -515,7 +535,7 @@ bool testClone()
 	}
 	if (strcmp(s1->_str, s2->_str) != 0)
 	{
-		printf("Didn't clone the right values.\n source: %s\tdest: %s\n",
+		printf("Didn't clone the right values.\n source: %s \t dest: %s\n",
 			   s1->_str, s2->_str);
 		myStringFree(s1);
 		myStringFree(s2);
@@ -546,6 +566,7 @@ bool testStringFilter()
 	{
 		return (*ch == 'o' || *ch == '!');
 	}
+
 	char *ORIGINAL = "Hello!", *EXPECTED = "Hell";
 	char* txt = getHeapStr(ORIGINAL);
 	if (txt == NULL)
@@ -715,38 +736,21 @@ bool testCatTo()
 
 bool testCustomCompare()
 {
-	int comp(const char a, const char b)
-	{ // Toy comparator for chars. Checks if the chars are close enough on the ascii table.
-		int EPSILON = 3;
-		if (a - b <= EPSILON && a - b >= -EPSILON)
-		{
-			return 0;
-		}
-		else if (a - b > EPSILON)
-		{
-			return 1;
-		}
-		else
-		{
-			return -1;
-		}
-	}
 	MyString *s1 = myStringAlloc(),
 		     *s2 = myStringAlloc();
 	myStringSetFromInt(s1, 92);
 	myStringSetFromInt(s2, 70);
-	int result = myStringCustomCompare(s1, s2, &comp);
+	int result = myStringCustomCompare(s1, s2, &customComp);
+	myStringFree(s1); myStringFree(s2);
 	if (result == MYSTR_ERROR_CODE)
 	{
 		printf("Function reported an error.\n");
-		myStringFree(s1); myStringFree(s2);
 		return false;
 	}
 	if (result != 0)
 	{
 		printf("Error comparing using custom compare.\n");
 		printf("Expected 0 \t Got %d\n", result);
-		myStringFree(s1); myStringFree(s2);
 		return false;
 	}
 	return true;
@@ -754,26 +758,137 @@ bool testCustomCompare()
 
 bool testEqual()
 {
+	char *eqString = "We both are equal.",
+		 *notEqString = "I'm not, actually.";
+	MyString *s1 = myStringAlloc(),
+			 *s2 = myStringAlloc();
+	myStringSetFromCString(s1, eqString);
+	myStringSetFromCString(s2, eqString);
+	int result = myStringEqual(s1, s2);
+	if (result == MYSTR_ERROR_CODE)
+	{
+		printf("Function reported an error.\n");
+		myStringFree(s1); myStringFree(s2);
+		return false;
+	}
+	if (result == 0)
+	{
+		printf("Function says strings aren't equal though they are.\n");
+		myStringFree(s1); myStringFree(s2);
+		return false;
+	}
+	myStringSetFromCString(s2, notEqString);
+	result = myStringEqual(s1, s2);
+	myStringFree(s1); myStringFree(s2);
+	if (result != 0)
+	{
+		printf("Function says strings are equal though they aren't.\n");
+		return false;
+	}
 	return true;
 }
 
 bool testCustomEqual()
 {
+	char *eqString = "We both are equal.",
+		 *notEqString = "I'm not, actually.";
+	MyString *s1 = myStringAlloc(),
+		     *s2 = myStringAlloc();
+	myStringSetFromCString(s1, eqString);
+	myStringSetFromCString(s2, eqString);
+	int result = myStringCustomEqual(s1, s2, &customComp);
+	if (result == MYSTR_ERROR_CODE)
+	{
+		printf("Function reported an error.\n");
+		myStringFree(s1); myStringFree(s2);
+		return false;
+	}
+	if (result == 0)
+	{
+		printf("Function says strings aren't equal though they are.\n");
+		myStringFree(s1); myStringFree(s2);
+		return false;
+	}
+	myStringSetFromCString(s2, notEqString);
+	result = myStringCustomEqual(s1, s2, &customComp);
+	myStringFree(s1); myStringFree(s2);
+	if (result != 0)
+	{
+		printf("Function says strings are equal though they aren't.\n");
+		return false;
+	}
 	return true;
 }
 
 bool testMemUsage()
 {
+	char *str = "Memory";
+	size_t len = 6;
+	MyString *s1 = myStringAlloc();
+	myStringSetFromCString(s1, str);
+	size_t result = myStringMemUsage(s1),
+		   actual = len * sizeof(char) + sizeof(MyString);
+	myStringFree(s1);
+	if (result != actual)
+	{
+		printf("Returned unexpected value: %lu for the memory usage which is: %lu.\n", result, actual);
+		return false;
+	}
 	return true;
 }
 
 bool testLen()
 {
+	char *str = "12345678";
+	size_t len = 8;
+	MyString *s1 = myStringAlloc();
+	myStringSetFromCString(s1, str);
+	size_t result = myStringLen(s1);
+	myStringFree(s1);
+	if (result != len)
+	{
+		printf("Unexpected string length for string: %s.\nExpected: %lu, got: %lu", str, len, result);
+		return false;
+	}
 	return true;
 }
 
 bool testWrite()
 {
+	char *str = "This is a test.\n", *fileName = "unit_test.out";
+	MyString *s1 = myStringAlloc();
+	MyStringRetVal ret = myStringSetFromCString(s1, str);
+	if (ret != MYSTRING_SUCCESS)
+	{
+		printf("Error setting string.\n");
+		myStringFree(s1);
+		return false;
+	}
+	FILE* inFile = fopen(fileName, "w");
+	if (inFile == NULL)
+	{
+		printf("Error opening file: %s\n", fileName);
+		myStringFree(s1);
+		return false;
+	}
+	ret = myStringWrite(s1, inFile);
+	if (ret != MYSTRING_SUCCESS)
+	{
+		printf("Error writing to file.\n");
+		myStringFree(s1);
+		return false;
+	}
+	fclose(inFile);
+	myStringFree(s1);
+	inFile = fopen(fileName, "r");
+	char line[150];
+	fgets(line, 150, inFile);
+	fclose(inFile);
+	if (strcmp(line, str) != 0)
+	{
+		printf("Unexpected file content.\nExpected: %s, got: %s.\n", str, line);
+		return false;		
+	}
 	return true;
 }
 
@@ -789,17 +904,19 @@ bool testSort()
 
 void runTest(char* testName, bool (*test)(void))
 {
+	static unsigned int testNum = 1;
 	char *result = "SUCCEEDED";
-	printf("RUNNING TEST: %s\n", testName);
-	if (!(*test)())
+	printf("Running test %u: %s\n", testNum, testName);
+	if (!(*test)()) // i.e test() returned false - meaning the test has failed
 	{
-		printf("--------------\n");
 		result = "FAILED";
 	}
 	printf("%s!\n", result);
+	testNum++;
+	printf(SEPARATOR);
 }
 
-int main()
+void runAllTests()
 {
 	printf("Start unit-tests...\n");
 
@@ -823,6 +940,12 @@ int main()
 	runTest("myStringSort", testSort);
 
 	printf("Finish unit-tests...\n");
+	return;
+}
+
+int main()
+{
+	runAllTests();
 	return 0;
 }
 

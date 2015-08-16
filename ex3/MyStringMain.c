@@ -1,4 +1,5 @@
 #include "MyString.h"
+#include <stdlib.h>
 
 #define MAX_INPUT_LENGTH 501
 #define WRITE_ONLY "w"
@@ -38,13 +39,13 @@ static int test1(const char* fileName)
 	}
 	if (result <= EQUAL)
 	{
-		big   = myStringSetToCString(b);
-		small = myStringSetToCString(a);
+		big   = myStringToCString(b);
+		small = myStringToCString(a);
 	}
 	else
 	{
-		big   = myStringSetToCString(a);
-		small = myStringSetToCString(b);
+		big   = myStringToCString(a);
+		small = myStringToCString(b);
 	} // Write to file
 	fprintf(inFile, "%s is smaller than %s\n", small, big);
 
