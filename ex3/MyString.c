@@ -294,12 +294,8 @@ char * myStringToCString(const MyString *str)
 	char* newStr = (char*)malloc(sizeof(char) * (str->_len + 1)); // + 1 for EOS
 	if (newStr != NULL)
 	{
-		unsigned int i = 0;
-		for (; i < str->_len; i++)
-		{
-			newStr[i] = str->_str[i];
-		}
-		newStr[i] = EOS;
+		memcpy(newStr, str->_str, sizeof(char) * str->_len);
+		newStr[str->_len] = EOS;
 	}
 	return newStr;
 }
@@ -316,10 +312,7 @@ MyStringRetVal myStringCat(MyString * dest, const MyString * src)
 		return MYSTRING_ERROR;
 	}
 	// Start to copy (str2 to end of str1)
-	for (unsigned int i = 0; i < src->_len; i++)
-	{
-		dest->_str[dest->_len + i] = src->_str[i];
-	}
+	memcpy(&(dest->_str[dest->_len]), src->_str, sizeof(char) * src->_len);
 	dest->_len = newLen;
 	return MYSTRING_SUCCESS;
 }
@@ -331,33 +324,19 @@ MyStringRetVal myStringCatTo(const MyString *str1, const MyString *str2, MyStrin
 		return MYSTRING_ERROR;
 	}
 	size_t newLen = str1->_len + str2->_len;
-	if (result->_len < newLen)
-	{ // if the dest. size is too small, allocate a new MyString
-		myStringFree(result);
-		if ((result = myStringClone(str1)) != NULL) // Clone the str1
-		{
-			return myStringCat(result, str2); // Then use regular cat to append str2
-		}
-		else
+	if ((result->_len < newLen) || (result->_len > newLen))
+	{ // if the dest. size is too small (or big), allocate a new block for the string
+		result->_str = (char*)realloc(result->_str, sizeof(char) * newLen);
+		if (result->_str == NULL)
 		{
 			return MYSTRING_ERROR;
 		}
-	} 
-	else // This means the result size is OK
-	{
-		for (unsigned int i = 0; i < str1->_len; i++)
-		{
-			result->_str[i] = str1->_str[i];
-		}
-		for (unsigned int i = 0; i < str2->_len; i++)
-		{
-			result->_str[str1->_len + i] = str2->_str[i];
-		}
-		result->_len = newLen; // Try to reallocate the block because
-							   // It might be smaller now.
-		result->_str = (char*)realloc(result->_str, sizeof(char) * newLen);
-		return MYSTRING_SUCCESS;
 	}
+	// At this point, result->_str has the right length.
+	memcpy(result->_str, str1->_str, sizeof(char) * str1->_len);
+	memcpy(&(result->_str[str1->_len]), str2->_str, sizeof(char) * str2->_len);
+	result->_len = newLen;
+	return MYSTRING_SUCCESS;	
 }
 
 int myStringCompare(const MyString *str1, const MyString *str2)
