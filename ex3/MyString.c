@@ -1,7 +1,7 @@
 // ---------------------------- includes --------------------------------
 
 #include "MyString.h"
-#include <stdlib.h> // For malloc..
+#include <stdlib.h> // For malloc, free, etc..
 #include <assert.h>
 #include <string.h> // memcmp and memcpy
 
@@ -9,7 +9,7 @@
 
 #define EOS '\0' // End-of-String
 #define ZERO_CHAR '0'
-#define INT_BASE 10
+#define INT_BASE 10 // The decimal base
 #define MINUS_SIGN '-'
 #define LESSER -1
 #define GREATER 1
@@ -20,6 +20,9 @@ struct _MyString
 	char* _str;
 	size_t _len;
 };
+
+// A typedef for comparators in this implementation
+typedef int (*pComparator)(const char, const char);
 
 // ------------------------ helper functions ----------------------------
 
@@ -91,6 +94,7 @@ static MyStringRetVal strAlloc(char** dest, size_t strLen)
 }
 
 // ------------------------- implementations ----------------------------
+
 MyString * myStringAlloc()
 {
 	MyString* newString = (MyString*)malloc(sizeof(MyString));
@@ -105,7 +109,7 @@ MyString * myStringAlloc()
 void myStringFree(MyString *str)
 {
 	if (str == NULL)
-	{
+	{ // Do nothing for NULL pointers.
 		return;
 	}
 	free(str->_str);
@@ -135,7 +139,7 @@ MyStringRetVal myStringSetFromMyString(MyString *str, const MyString *other)
 	{
 		return MYSTRING_ERROR;
 	}
-	if (strAlloc(&(str->_str), other->_len) == MYSTRING_ERROR)
+	else if (strAlloc(&(str->_str), other->_len) == MYSTRING_ERROR)
 	{
 		return MYSTRING_ERROR;
 	}
@@ -224,14 +228,14 @@ MyStringRetVal myStringSetFromInt(MyString *str, int n)
 		return MYSTRING_SUCCESS;
 	} // END OF n == 0
 	size_t i = 1, len = 0;
-	while (n / i != 0)
+	while (n / i != 0) // This finds the number of digits the input number consists of (len)
 	{
 		i *= INT_BASE;
 		len++;
 	}
 	if (n < 0)
 	{
-		len++;	
+		len++; // ++ for the MINUS sign
 	}
 	if (strAlloc(&(str->_str), len) == MYSTRING_ERROR)
 	{
@@ -242,10 +246,11 @@ MyStringRetVal myStringSetFromInt(MyString *str, int n)
 	{
 		str->_str[j] = MINUS_SIGN;
 		j++;
-		n = -n;
+		n = -n; 
 	}
+	// From now on, n is a positive number
 	for (; j < len; j++)
-	{
+	{ // This extracts the MSD (most-significant-digit) from the number
 		i /= INT_BASE;
 		str->_str[j] = digToChar(n / i);
 		n %= i;
@@ -270,6 +275,7 @@ int myStringToInt(const MyString *str)
 	}
 	for (; i < str->_len; i++)
 	{
+		// Tries to parse the char as a digit and then multiply it by 10^(location_of_digit)
 		if ((charValue = charToDig(str->_str[i])) != MYSTR_ERROR_CODE)
 		{
 			total += charValue * intPow(INT_BASE, str->_len - i - 1);
@@ -310,13 +316,13 @@ MyStringRetVal myStringCat(MyString * dest, const MyString * src)
 	size_t newLen = dest->_len + src->_len;
 	// Reallocate memory for the combined string.
 	char* temp = dest->_str;
-	
 	dest->_str = (char*)realloc(dest->_str, sizeof(char) * newLen);
 	if (dest->_str == NULL)
 	{
 		dest->_str = temp;
 		return MYSTRING_ERROR;
 	}
+	// If the realloc moved the block to another place, free the old one.
 	if (temp != dest->_str)
 	{
 		free(temp);
@@ -372,20 +378,21 @@ int myStringCompare(const MyString *str1, const MyString *str2)
 	return myStringCustomCompare(str1, str2, &defaultComparator); // Use custom compare with default comparator
 }
 
-int myStringCustomCompare(const MyString *str1, const MyString *str2,
-						  int (*comp)(const char, const char))
+int myStringCustomCompare(const MyString *str1, const MyString *str2, pComparator comp)
 {
+	int result;
 	if (str1 == NULL || str2 == NULL)
 	{ // Uncomparable strings
 		return MYSTR_ERROR_CODE;
 	} // Check all chars of the smaller string to see if there's a difference
-	for (unsigned int i = 0; i < str1->_len && str2->_len; i++)
+	for (unsigned int i = 0; (i < str1->_len) && (i < str2->_len); i++)
 	{
-		if (comp(str1->_str[i], str2->_str[i]) < EQUAL)
+		result = comp(str1->_str[i], str2->_str[i]);
+		if (result < EQUAL)
 		{
 			return LESSER;
 		}
-		else if (comp(str1->_str[i], str2->_str[i]) > EQUAL)
+		else if (result > EQUAL)
 		{
 			return GREATER;
 		}
@@ -405,8 +412,7 @@ int myStringEqual(const MyString *str1, const MyString *str2)
 	return myStringCustomEqual(str1, str2, &defaultComparator);
 }
 
-int myStringCustomEqual(const MyString *str1, const MyString *str2,
-						int(*comp)(const char, const char))
+int myStringCustomEqual(const MyString *str1, const MyString *str2, pComparator comp)
 {
 	if (str1 == NULL || str2 == NULL)
 	{
@@ -419,7 +425,6 @@ int myStringCustomEqual(const MyString *str1, const MyString *str2,
 	// Note that true == 1 and false == 0 according to stdbool.h documentation
 	return myStringCustomCompare(str1, str2, comp) == 0 ? true : false;
 }
-
 
 unsigned long myStringMemUsage(const MyString *str1)
 {
@@ -440,7 +445,7 @@ MyStringRetVal myStringWrite(const MyString *str, FILE *stream)
 	}
 	for (unsigned int i = 0; i < str->_len; i++)
 	{
-		if (fputc(str->_str[i], stream) == EOF) // EOF means the writing failed.
+		if (fputc(str->_str[i], stream) == EOF) // EOF means the writing has failed.
 		{
 			return MYSTRING_ERROR;
 		}
@@ -448,17 +453,17 @@ MyStringRetVal myStringWrite(const MyString *str, FILE *stream)
 	return MYSTRING_SUCCESS;
 }
 
-
-void myStringCustomSort(MyString* arr[], int len, int (*comp)(const char, const char))
+void myStringCustomSort(MyString* arr[], int len, pComparator comp)
 {
+	// A function that gets 2 pointers to a pointer to MyString and compares them.
 	int strCompare(const void* a, const void* b)
 	{
-		return myStringCustomCompare((MyString*) a, (MyString*) b, comp);
+		return myStringCustomCompare(*(MyString**)a, *(MyString**)b, comp);
 	}
 	qsort(arr, (size_t) len, sizeof(MyString*), strCompare);
 }
 
-void myStringSort(MyString* arr[], int len)
+void myStringSort(MyString *arr[], int len)
 {
 	myStringCustomSort(arr, len, &defaultComparator);
 }
@@ -467,10 +472,13 @@ void myStringSort(MyString* arr[], int len)
 
 #ifndef NDEBUG
 
-#define EOS '\0' // End-of-String
-#define SEPARATOR "--------------------\n"
+#include <stdarg.h>
 
-// Not sure how to test the myStringFree() function.
+#define SEPARATOR "--------------------\n"
+#define MAX_LINE_LENGTH 150
+#define TEST_FILE_NAME "unitTest.out"
+#define WRITE_ONLY "w"
+#define READ_ONLY "r"
 
 static int customComp(const char a, const char b)
 { // Toy comparator for chars. Checks if the chars are close enough on the ascii table.
@@ -504,6 +512,17 @@ static char* getHeapStr(char* str)
 	return dest;
 }
 
+static void freeAll(int numOfItems, ...)
+{
+	va_list ap;
+	va_start(ap, numOfItems);
+	for (int i = 0; i < numOfItems; i++)
+	{
+		myStringFree(va_arg(ap, MyString*));
+	}
+	va_end(ap);
+}
+
 bool testAlloc()
 {
 	MyString* a = myStringAlloc();
@@ -515,6 +534,8 @@ bool testAlloc()
 	myStringFree(a);
 	return true;
 }
+
+// Not sure how to test the myStringFree() function.
 
 bool testClone()
 {
@@ -537,12 +558,10 @@ bool testClone()
 	{
 		printf("Didn't clone the right values.\n source: %s \t dest: %s\n",
 			   s1->_str, s2->_str);
-		myStringFree(s1);
-		myStringFree(s2);
+		freeAll(2, s1, s2);
 		return false;
 	}
-	myStringFree(s1);
-	myStringFree(s2);
+	freeAll(2, s1, s2);
 	return true;
 }
 
@@ -550,8 +569,7 @@ bool testSetFromMyString()
 {
 	MyString *s1 = myStringAlloc(), *s2 = myStringAlloc();
 	MyStringRetVal ret = myStringSetFromMyString(s2, s1);
-	myStringFree(s1);
-	myStringFree(s2);
+	freeAll(2, s1, s2);
 	if (ret == MYSTRING_ERROR)
 	{
 		printf("Failed to set MyString from another\n");
@@ -560,24 +578,25 @@ bool testSetFromMyString()
 	return true;
 }
 
+static bool myFilt(const char* ch)
+{
+	return (*ch == 'o' || *ch == '!');
+}
+
 bool testStringFilter()
 {
-	bool filt(const char* ch) // Toy filter function
-	{
-		return (*ch == 'o' || *ch == '!');
-	}
-
 	char *ORIGINAL = "Hello!", *EXPECTED = "Hell";
 	char* txt = getHeapStr(ORIGINAL);
+	size_t len = 7;
 	if (txt == NULL)
 	{
 		printf("Could not allocate memory for a string\n");
 		return false;
 	}	
 	MyString *str = myStringAlloc();
-	str->_len = 7;
+	str->_len = len;
 	str->_str = txt;
-	MyStringRetVal ret = myStringFilter(str, filt);
+	MyStringRetVal ret = myStringFilter(str, myFilt);
 	if (ret == MYSTRING_ERROR)
 	{
 		printf("Failed to filter string\n");
@@ -611,7 +630,7 @@ bool testSetFromCString()
 
 bool testSetFromInt()
 {
-	int myInt = 1908; // The year of Kinneret Moshava founding
+	int myInt = 1908; // The year Kinneret Moshava was founded
 	MyString *str = myStringAlloc();
 	MyStringRetVal ret = myStringSetFromInt(str, myInt);
 	if (ret == MYSTRING_ERROR)
@@ -695,17 +714,18 @@ bool testCat()
 	if (result == MYSTR_ERROR_CODE)
 	{
 		printf("Failed appending \"%s\" to \"%s\"\n", txt2, txt1);
-		myStringFree(s1); myStringFree(s2);
+		freeAll(2, s1, s2);
 		return false;
 	}
-	if (strcmp(EXPECTED, myStringToCString(s1)) != 0)
+	char *actual = myStringToCString(s1);
+	if (strcmp(EXPECTED, actual) != 0)
 	{
 		printf("Failed appending \"%s\" to \"%s\"\n", txt2, txt1);
-		printf("Expected:\"%s\" \t Got:\"%s\"\n", EXPECTED, myStringToCString(s1));
-		myStringFree(s1); myStringFree(s2);
+		printf("Expected:\"%s\" \t Got:\"%s\"\n", EXPECTED, actual);
+		freeAll(2, s1, s2); free(actual);
 		return false;
 	}
-	myStringFree(s1); myStringFree(s2);
+	freeAll(2, s1, s2); free(actual);
 	return true;
 }
 
@@ -720,19 +740,23 @@ bool testCatTo()
 	if (myStringCatTo(s1, s2, s3) == MYSTRING_ERROR)
 	{
 		printf("Failed appending \"%s\" to \"%s\"\n", txt2, txt1);
-		myStringFree(s1); myStringFree(s2); myStringFree(s3);
+		freeAll(3, s1, s2, s3);
 		return false;
 	}
-	if (strcmp(EXPECTED, myStringToCString(s3)) != 0)
+	char *actual = myStringToCString(s3);
+	if (strcmp(EXPECTED, actual) != 0)
 	{
 		printf("Failed appending \"%s\" to \"%s\"\n", txt2, txt1);
-		printf("Expected:\"%s\" \t Got:\"%s\"\n", EXPECTED, myStringToCString(s3));
-		myStringFree(s1); myStringFree(s2); myStringFree(s3);
+		printf("Expected:\"%s\" \t Got:\"%s\"\n", EXPECTED, actual);
+		freeAll(3, s1, s2, s3); free(actual);
 		return false;
 	}
-	myStringFree(s1); myStringFree(s2); myStringFree(s3);
+	freeAll(3, s1, s2, s3);
+	free(actual);
 	return true;
 }
+
+// myStringCompare uses myStringCustomCompare so checking it is pointless.
 
 bool testCustomCompare()
 {
@@ -741,52 +765,22 @@ bool testCustomCompare()
 	myStringSetFromInt(s1, 92);
 	myStringSetFromInt(s2, 70);
 	int result = myStringCustomCompare(s1, s2, &customComp);
-	myStringFree(s1); myStringFree(s2);
+	freeAll(2, s1, s2);
 	if (result == MYSTR_ERROR_CODE)
 	{
 		printf("Function reported an error.\n");
 		return false;
 	}
-	if (result != 0)
+	if (result != EQUAL)
 	{
 		printf("Error comparing using custom compare.\n");
-		printf("Expected 0 \t Got %d\n", result);
+		printf("Expected %d \t Got %d\n", EQUAL, result);
 		return false;
 	}
 	return true;
 }
 
-bool testEqual()
-{
-	char *eqString = "We both are equal.",
-		 *notEqString = "I'm not, actually.";
-	MyString *s1 = myStringAlloc(),
-			 *s2 = myStringAlloc();
-	myStringSetFromCString(s1, eqString);
-	myStringSetFromCString(s2, eqString);
-	int result = myStringEqual(s1, s2);
-	if (result == MYSTR_ERROR_CODE)
-	{
-		printf("Function reported an error.\n");
-		myStringFree(s1); myStringFree(s2);
-		return false;
-	}
-	if (result == 0)
-	{
-		printf("Function says strings aren't equal though they are.\n");
-		myStringFree(s1); myStringFree(s2);
-		return false;
-	}
-	myStringSetFromCString(s2, notEqString);
-	result = myStringEqual(s1, s2);
-	myStringFree(s1); myStringFree(s2);
-	if (result != 0)
-	{
-		printf("Function says strings are equal though they aren't.\n");
-		return false;
-	}
-	return true;
-}
+// Same for equal and customEqual.
 
 bool testCustomEqual()
 {
@@ -800,18 +794,18 @@ bool testCustomEqual()
 	if (result == MYSTR_ERROR_CODE)
 	{
 		printf("Function reported an error.\n");
-		myStringFree(s1); myStringFree(s2);
+		freeAll(2, s1, s2);
 		return false;
 	}
 	if (result == 0)
 	{
 		printf("Function says strings aren't equal though they are.\n");
-		myStringFree(s1); myStringFree(s2);
+		freeAll(2, s1, s2);
 		return false;
 	}
 	myStringSetFromCString(s2, notEqString);
 	result = myStringCustomEqual(s1, s2, &customComp);
-	myStringFree(s1); myStringFree(s2);
+	freeAll(2, s1, s2);
 	if (result != 0)
 	{
 		printf("Function says strings are equal though they aren't.\n");
@@ -855,7 +849,7 @@ bool testLen()
 
 bool testWrite()
 {
-	char *str = "This is a test.\n", *fileName = "unit_test.out";
+	char *str = "This is a test.\n", *fileName = TEST_FILE_NAME;
 	MyString *s1 = myStringAlloc();
 	MyStringRetVal ret = myStringSetFromCString(s1, str);
 	if (ret != MYSTRING_SUCCESS)
@@ -864,7 +858,7 @@ bool testWrite()
 		myStringFree(s1);
 		return false;
 	}
-	FILE* inFile = fopen(fileName, "w");
+	FILE* inFile = fopen(fileName, WRITE_ONLY);
 	if (inFile == NULL)
 	{
 		printf("Error opening file: %s\n", fileName);
@@ -872,17 +866,16 @@ bool testWrite()
 		return false;
 	}
 	ret = myStringWrite(s1, inFile);
+	myStringFree(s1);
 	if (ret != MYSTRING_SUCCESS)
 	{
 		printf("Error writing to file.\n");
-		myStringFree(s1);
 		return false;
 	}
 	fclose(inFile);
-	myStringFree(s1);
-	inFile = fopen(fileName, "r");
-	char line[150];
-	fgets(line, 150, inFile);
+	inFile = fopen(fileName, READ_ONLY);
+	char line[MAX_LINE_LENGTH];
+	fgets(line, MAX_LINE_LENGTH, inFile);
 	fclose(inFile);
 	if (strcmp(line, str) != 0)
 	{
@@ -892,15 +885,52 @@ bool testWrite()
 	return true;
 }
 
+static void printArr(MyString* arr[], int len)
+{
+	printf("Printing array:\n");
+	char* temp;
+	for (int i = 0; i < len; i++)
+	{
+		temp = myStringToCString(arr[i]);
+		printf("str[%d]: %s\n", i + 1, temp);
+		free(temp);
+		temp = NULL;
+	}
+}
+
 bool testCustomSort()
 {
+	int len = 6;
+	char *txt1 = " nothing", *txt2 = "Aa", *txt3 = "Shalom",
+		 *txt4 = "Something", *txt5 = "a", *txt6 = "eb";
+	char* sorted[] = { txt1, txt2, txt3, txt4, txt5, txt6 }; // This is a sorted array.
+	MyString *s1 = myStringAlloc(), *s2 = myStringAlloc(), *s3 = myStringAlloc(),
+		   	 *s4 = myStringAlloc(), *s5 = myStringAlloc(), *s6 = myStringAlloc();
+	// Set all MyString objects to a random permutation of the strings above.
+	myStringSetFromCString(s1, txt6); myStringSetFromCString(s2, txt3); myStringSetFromCString(s3, txt2);
+	myStringSetFromCString(s4, txt5); myStringSetFromCString(s5, txt1); myStringSetFromCString(s6, txt4);
+	MyString* arr[] = { s1, s2, s3, s4, s5, s6 };
+	myStringCustomSort(arr, len, customComp); // Sort.
+	char* result = NULL;
+	for (int i = 0; i < len; i++)
+	{
+		result = myStringToCString(arr[i]);
+		if (strcmp(sorted[i], result) != EQUAL)
+		{
+			printf("Array isn't sorted as expected.\n");
+			printArr(arr, len);
+			free(result);
+			freeAll(len, s1, s2, s3, s4, s5, s6);
+			return false;
+		}
+		free(result);
+		result = NULL;
+	}
+	freeAll(len, s1, s2, s3, s4, s5, s6);
 	return true;
 }
 
-bool testSort()
-{
-	return true;
-}
+// myStringSort function uses CustomSort function, so checking it is pointless.
 
 void runTest(char* testName, bool (*test)(void))
 {
@@ -919,6 +949,7 @@ void runTest(char* testName, bool (*test)(void))
 void runAllTests()
 {
 	printf("Start unit-tests...\n");
+	printf(SEPARATOR);
 
 	runTest("myStringAlloc", testAlloc);
 	runTest("myStringClone", testClone);
@@ -931,13 +962,11 @@ void runAllTests()
 	runTest("myStringCat", testCat);
 	runTest("myStringCatTo", testCatTo);
 	runTest("myStringCustomCompare", testCustomCompare);
-	runTest("myStringEqual", testEqual);
 	runTest("myStringCustomEqual", testCustomEqual);
 	runTest("myStringMemUsage", testMemUsage);
 	runTest("myStringLen", testLen);
 	runTest("myStringWrite", testWrite);
 	runTest("myStringCustomSort", testCustomSort);
-	runTest("myStringSort", testSort);
 
 	printf("Finish unit-tests...\n");
 	return;
