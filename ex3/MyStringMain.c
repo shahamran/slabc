@@ -8,6 +8,9 @@
 #define FAILURE 1
 #define EQUAL 0
 
+/**
+ * Displays a message given by msg C-String and writes user input to dest.
+ */
 static char* getUserInput(const char* msg, char* dest)
 {
 	printf("%s\n", msg);
@@ -15,6 +18,10 @@ static char* getUserInput(const char* msg, char* dest)
 	return dest;
 }
 
+/**
+ * Gets input for two MyString objects and compares them using myStringCompare.
+ * Writes the output to the given file.
+ */
 static int test1(const char* fileName)
 {
 	FILE *inFile = fopen(fileName, WRITE_ONLY);
@@ -56,6 +63,9 @@ static int test1(const char* fileName)
 	return SUCCESS;
 }
 
+/**
+ * Runs the test.
+ */
 int main()
 {
 	return test1(FILE_NAME);
