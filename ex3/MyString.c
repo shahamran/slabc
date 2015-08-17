@@ -1,3 +1,35 @@
+/**
+ * ___Design_Details___
+ * 
+ * _MyString struct: I chose to define two variables in the struct:
+ * an int to specify the string length and a pointer to a char which will hold the
+ * address of the first char in our string. This allows dynamic and flexible memory
+ * management since the variables don't need to be in a continuos block of memory
+ * (except the string).
+ *
+ * Memory Allocations: Memory allocation for the struct itself is made naturally by the
+ * myStringAlloc() function which returns a pointer to the allocated struct. This function
+ * is also used by the Clone function and all the unit-tests.
+ * Allocation for the actual chars-set is usually made by the static strAlloc() helper function 
+ * which gets a pointer to our char pointer and the size of the block to allocate. 
+ * Most of the functions that set strings (from MyString, from CString etc.) use this function
+ * to allocate dynamic-heap memory block for the string.
+ * The memory for the structs is being freed at the myStringFree() function which frees both
+ * the memory allocated for the string and the memory allocated to the struct.
+ * When a memory block needs resizing, realloc() function is used to allocate more memory to the
+ * same block or move it if needed. According to the documentation this function considers
+ * efficiency factors in the decision whether to really change the block-size or not (e.g 1 byte
+ * changes) so my implementation does not contain those considerations.
+ *  
+ * Wherever possible, I have used the memcpy function provided by string.h library which is
+ * supposed to be faster than other methods of copying data because of compiler-optimization
+ * reasons.
+ * 
+ * Note that runtime-complexity described in the documentation uses notation like (w/o malloc)
+ * and (w malloc). The complexity of malloc is undetermined thus my complexity description is
+ * mainly about my implementation (w/o malloc).
+ */
+
 // ---------------------------- includes --------------------------------
 
 #include "MyString.h"
@@ -15,6 +47,10 @@
 #define GREATER 1
 #define EQUAL 0
 
+/**
+ * The struct that holds a pointer to the string data and an int indicating the length of
+ * the string. _len = 0, _str = NULL indicates the empty string.
+ */
 struct _MyString
 {
 	char* _str;
@@ -26,11 +62,19 @@ typedef int (*pComparator)(const char, const char);
 
 // ------------------------ helper functions ----------------------------
 
-static char digToChar(int digit)
+/**
+ * A simple helper function that returns the char value of a digit (0 <= int <= 9)
+ */
+inline static char digToChar(int digit)
 {
-	return digit + ZERO_CHAR;
+	return (digit + ZERO_CHAR);
 }
 
+/**
+ * Gets a digit char and returns the number it represents.
+ * @param chr The char of the digit.
+ * @return An int between 0 to 9 if the conversion succeeded, MYSTR_ERROR_CODE otherwise.
+ */
 static int charToDig(char chr)
 {
 	int charVal = chr - ZERO_CHAR;
@@ -41,6 +85,9 @@ static int charToDig(char chr)
 	return charVal;
 }
 
+/**
+ * Returns base^powerVal.
+ */
 static int intPow(int base, unsigned int powerVal)
 {
 	if (powerVal == 0)
@@ -55,6 +102,12 @@ static int intPow(int base, unsigned int powerVal)
 	return result;
 }
 
+/**
+ * A comparator that compares the natural order of chars according to ascii values.
+ * @param c1
+ * @param c2
+ * @return EQUAL (0) if c1 == c2, LESSER (-1) if c1 < c2, GREATER (1) otherwise.
+ */
 static int defaultComparator(const char c1, const char c2)
 {
 	if (c1 == c2)
@@ -71,6 +124,13 @@ static int defaultComparator(const char c1, const char c2)
 	}
 }
 
+/**
+ * Attempts to allocate dynamic-heap memory in a given size for a string.
+ * @param dest A pointer to the pointer to the first char of the string.
+ * @param strLen The length of the string.
+ * @return MYSTRING_SUCCESS if the allocation was successful (*dest was changed),
+ *         MYSTRING_ERROR otherwise (*dest remains unchanged).
+ */
 static MyStringRetVal strAlloc(char** dest, size_t strLen)
 {
 	if (strLen == 0)
@@ -95,6 +155,10 @@ static MyStringRetVal strAlloc(char** dest, size_t strLen)
 
 // ------------------------- implementations ----------------------------
 
+/**
+ * This function's complexity is the complexity of malloc(sizeof(MyString)) function, which
+ * is undetermined. Without the malloc it runs in O(1).
+ */
 MyString * myStringAlloc()
 {
 	MyString* newString = (MyString*)malloc(sizeof(MyString));
@@ -106,6 +170,9 @@ MyString * myStringAlloc()
 	return newString;
 }
 
+/**
+ * Runs in O(1).
+ */
 void myStringFree(MyString *str)
 {
 	if (str == NULL)
@@ -118,6 +185,10 @@ void myStringFree(MyString *str)
 	return;
 }
 
+/**
+ * Uses myStringSetFromMyString which Runs in O(n) where n is the length of the string that is 
+ * being cloned (w/o malloc), or undetermined amount of time (w malloc)
+ */
 MyString * myStringClone(const MyString *str)
 {
 	assert(str != NULL);
@@ -133,6 +204,9 @@ MyString * myStringClone(const MyString *str)
 	return newString;
 }
 
+/**
+ * Runs in O(n) where n is the length of the (other) string (w/o malloc)
+ */
 MyStringRetVal myStringSetFromMyString(MyString *str, const MyString *other)
 {
 	if (str == NULL || other == NULL)
@@ -151,6 +225,9 @@ MyStringRetVal myStringSetFromMyString(MyString *str, const MyString *other)
 	}
 }
 
+/**
+ * Runs in O(n) where n is the length of str's content.
+ */
 MyStringRetVal myStringFilter(MyString *str, bool (*filt)(const char *))
 {
 	if (str == NULL || filt == NULL || str->_str == NULL)
@@ -176,10 +253,12 @@ MyStringRetVal myStringFilter(MyString *str, bool (*filt)(const char *))
 	{
 		str->_str = temp;
 	}
-	// Even if reallocation didn't succeed, the operation still succeeded.
 	return MYSTRING_SUCCESS;
 }
 
+/**
+ * Runs in O(len(cString)).
+ */
 MyStringRetVal myStringSetFromCString(MyString *str, const char * cString)
 {
 	if (str == NULL || cString == NULL)
@@ -204,6 +283,9 @@ MyStringRetVal myStringSetFromCString(MyString *str, const char * cString)
 	}
 }
 
+/**
+ * Runs in O(n) where n is the number of digits the given int consists of.
+ */
 MyStringRetVal myStringSetFromInt(MyString *str, int n)
 {
 	if (str == NULL)
@@ -252,6 +334,9 @@ MyStringRetVal myStringSetFromInt(MyString *str, int n)
 	return MYSTRING_SUCCESS;
 }
 
+/**
+ * Runs in O(n) where n is the number of digits the string consists of.
+ */
 int myStringToInt(const MyString *str)
 {
 	if (str == NULL || str->_str == NULL)
@@ -285,6 +370,9 @@ int myStringToInt(const MyString *str)
 	return total;
 }
 
+/**
+ * Runs in O(str->_len) (linear in the length of the string).
+ */
 char * myStringToCString(const MyString *str)
 {
 	if (str == NULL)
@@ -300,6 +388,10 @@ char * myStringToCString(const MyString *str)
 	return newStr;
 }
 
+/**
+ * Let n = len(dest), m = len(src). If realloc succeeds (enlarges the memory block in-place),
+ * runs in O(m), otherwise, runs in O(n + m).
+ */
 MyStringRetVal myStringCat(MyString * dest, const MyString * src)
 {
 	size_t newLen = dest->_len + src->_len;
@@ -317,6 +409,9 @@ MyStringRetVal myStringCat(MyString * dest, const MyString * src)
 	return MYSTRING_SUCCESS;
 }
 
+/**
+ * Like before, n = len(str1), m = len(str2). Runs in O(n + m)
+ */
 MyStringRetVal myStringCatTo(const MyString *str1, const MyString *str2, MyString *result)
 {
 	if (result == NULL || str1 == NULL || str2 == NULL)
@@ -333,17 +428,23 @@ MyStringRetVal myStringCatTo(const MyString *str1, const MyString *str2, MyStrin
 		}
 	}
 	// At this point, result->_str has the right length.
-	memcpy(result->_str, str1->_str, sizeof(char) * str1->_len);
-	memcpy(&(result->_str[str1->_len]), str2->_str, sizeof(char) * str2->_len);
+	memcpy(result->_str, str1->_str, sizeof(char) * str1->_len); // Copy str1 --> result
+	memcpy(&(result->_str[str1->_len]), str2->_str, sizeof(char) * str2->_len); // str2 --> result
 	result->_len = newLen;
-	return MYSTRING_SUCCESS;	
+	return MYSTRING_SUCCESS;
 }
 
+/**
+ * Runs the same as myStringCustomCompare.
+ */
 int myStringCompare(const MyString *str1, const MyString *str2)
 {
 	return myStringCustomCompare(str1, str2, &defaultComparator); // Use custom compare with default comparator
 }
 
+/**
+ * Let n = len(str1), m = len(str2), k = min{n, m}. runs in O(k).
+ */
 int myStringCustomCompare(const MyString *str1, const MyString *str2, pComparator comp)
 {
 	int result;
@@ -373,11 +474,17 @@ int myStringCustomCompare(const MyString *str1, const MyString *str2, pComparato
 	}
 }
 
+/**
+ * Same as myStringCustomEqual.
+ */
 int myStringEqual(const MyString *str1, const MyString *str2)
 {
 	return myStringCustomEqual(str1, str2, &defaultComparator);
 }
 
+/**
+ * If len(str1) != len(str2), runs in O(1). Otherwise, runs in O(n).
+ */
 int myStringCustomEqual(const MyString *str1, const MyString *str2, pComparator comp)
 {
 	if (str1 == NULL || str2 == NULL)
@@ -392,17 +499,26 @@ int myStringCustomEqual(const MyString *str1, const MyString *str2, pComparator 
 	return myStringCustomCompare(str1, str2, comp) == 0 ? true : false;
 }
 
+/**
+ * Runs in O(1).
+ */
 unsigned long myStringMemUsage(const MyString *str1)
 {
 	// The size of the struct MyString + the size allocated for the chars
 	return (str1->_len * sizeof(char)) + sizeof(MyString);
 }
 
+/**
+ * Runs in O(1).
+ */
 unsigned long myStringLen(const MyString *str1)
 {
 	return str1->_len; // Hmm...
 }
 
+/**
+ * Runs in O(len(str)).
+ */
 MyStringRetVal myStringWrite(const MyString *str, FILE *stream)
 {
 	if (str == NULL)
@@ -419,6 +535,10 @@ MyStringRetVal myStringWrite(const MyString *str, FILE *stream)
 	return MYSTRING_SUCCESS;
 }
 
+/**
+ * Let n be the average length of a string in the array, This function runs in
+ * (Complexity-of-qsort) * n <= n * len * log(len)
+ */
 void myStringCustomSort(MyString* arr[], int len, pComparator comp)
 {
 	// A function that gets 2 pointers to a pointer to MyString and compares them.
@@ -429,6 +549,9 @@ void myStringCustomSort(MyString* arr[], int len, pComparator comp)
 	qsort(arr, (size_t) len, sizeof(MyString*), strCompare);
 }
 
+/**
+ * Same as myStringCustomSort.
+ */
 void myStringSort(MyString *arr[], int len)
 {
 	myStringCustomSort(arr, len, &defaultComparator);
@@ -446,8 +569,15 @@ void myStringSort(MyString *arr[], int len)
 #define WRITE_ONLY "w"
 #define READ_ONLY "r"
 
+/**
+ * Toy comparator for chars. Checks if the chars are close enough on the ascii table.
+ * @param a
+ * @param b
+ * @return EQUAL if |a - b| <= EPSILON, LESSER if a < b - EPSILON, GREATER if a > b + EPSILON
+ * EPSILON == 3.
+ */
 static int customComp(const char a, const char b)
-{ // Toy comparator for chars. Checks if the chars are close enough on the ascii table.
+{
 	int EPSILON = 3;
 	if (a - b <= EPSILON && a - b >= -EPSILON)
 	{
@@ -463,21 +593,27 @@ static int customComp(const char a, const char b)
 	}
 }
 
+/**
+ * Allocates a memory block in the dynamic-heap for a given cstring.
+ * @param str A C-String (sequence of char that ends with EOS[=='\0'])
+ * @return A pointer to a memory block containing a copy of the given string if allocation
+ * succeeds, NULL otherwise.
+ */
 static char* getHeapStr(char* str)
 {
 	int len = strlen(str) + 1; // + 1 for '\0'
 	char* dest = (char*)malloc(sizeof(char) * len);
 	if (dest != NULL)
 	{
-		for (int i = 0; i < len - 1; i++)
-		{
-			dest[i] = str[i];
-		}
-		dest[len - 1] = EOS;
+		memcpy(dest, str, sizeof(char) * len);
 	}
 	return dest;
 }
 
+/**
+ * Frees all MyString pointers that are given.
+ * @param numOfItems The number of MyString pointers following this parameter.
+ */
 static void freeAll(int numOfItems, ...)
 {
 	va_list ap;
@@ -489,6 +625,9 @@ static void freeAll(int numOfItems, ...)
 	va_end(ap);
 }
 
+/**
+ * Tests myStringAlloc() function.
+ */
 bool testAlloc()
 {
 	MyString* a = myStringAlloc();
@@ -503,6 +642,9 @@ bool testAlloc()
 
 // Not sure how to test the myStringFree() function.
 
+/**
+ * Tests myStringClone() function.
+ */
 bool testClone()
 {
 	char* txt = getHeapStr("bye");
@@ -531,6 +673,9 @@ bool testClone()
 	return true;
 }
 
+/**
+ * Tests myStringSetFromMyString() function.
+ */
 bool testSetFromMyString()
 {
 	MyString *s1 = myStringAlloc(), *s2 = myStringAlloc();
@@ -544,11 +689,17 @@ bool testSetFromMyString()
 	return true;
 }
 
+/**
+ * A toy filter function that filters the chars 'o' and '!'.
+ */
 static bool myFilt(const char* ch)
 {
 	return (*ch == 'o' || *ch == '!');
 }
 
+/**
+ * Tests myStringFilter() function.
+ */
 bool testStringFilter()
 {
 	char *ORIGINAL = "Hello!", *EXPECTED = "Hell";
@@ -580,6 +731,9 @@ bool testStringFilter()
 	return true;
 }
 
+/**
+ * Tests myStringSetFromCString() function.
+ */
 bool testSetFromCString()
 {
 	char* cString = "Hello!";
@@ -594,6 +748,9 @@ bool testSetFromCString()
 	return true;
 }
 
+/**
+ * Tests myStringSetFromInt() function.
+ */
 bool testSetFromInt()
 {
 	int myInt = 1908; // The year Kinneret Moshava was founded
@@ -619,6 +776,9 @@ bool testSetFromInt()
 	return true;
 }
 
+/**
+ * Tests myStringToInt() function.
+ */
 bool testStringToInt()
 {
 	int len = 4, myInt = 1908;
@@ -643,6 +803,9 @@ bool testStringToInt()
 	return true;
 }
 
+/**
+ * Tests myStringToCString() function.
+ */
 bool testStringToCString()
 {
 	int len = 6;
@@ -669,6 +832,9 @@ bool testStringToCString()
 	return true;
 }
 
+/**
+ * Tests myStringCat() function.
+ */
 bool testCat()
 {
 	char *txt1 = "Hello ", *txt2 = "World!", *EXPECTED = "Hello World!";
@@ -695,6 +861,9 @@ bool testCat()
 	return true;
 }
 
+/**
+ * Tests myStringCatTo() function.
+ */
 bool testCatTo()
 {
 	char *txt1 = "Hello ", *txt2 = "World!", *EXPECTED = "Hello World!";
@@ -724,6 +893,9 @@ bool testCatTo()
 
 // myStringCompare uses myStringCustomCompare so checking it is pointless.
 
+/**
+ * Tests myStringCustomCompare() function.
+ */
 bool testCustomCompare()
 {
 	MyString *s1 = myStringAlloc(),
@@ -748,6 +920,9 @@ bool testCustomCompare()
 
 // Same for equal and customEqual.
 
+/**
+ * Tests myStringCustomEqual() function.
+ */
 bool testCustomEqual()
 {
 	char *eqString = "We both are equal.",
@@ -780,6 +955,9 @@ bool testCustomEqual()
 	return true;
 }
 
+/**
+ * Tests myStringMemUsage() function.
+ */
 bool testMemUsage()
 {
 	char *str = "Memory";
@@ -797,6 +975,9 @@ bool testMemUsage()
 	return true;
 }
 
+/**
+ * Tests myStringLen() function.
+ */
 bool testLen()
 {
 	char *str = "12345678";
@@ -813,6 +994,9 @@ bool testLen()
 	return true;
 }
 
+/**
+ * Tests myStringWrite() function.
+ */
 bool testWrite()
 {
 	char *str = "This is a test.\n", *fileName = TEST_FILE_NAME;
@@ -851,6 +1035,9 @@ bool testWrite()
 	return true;
 }
 
+/**
+ * Prints all the contents of an array of MyString*
+ */
 static void printArr(MyString* arr[], int len)
 {
 	printf("Printing array:\n");
@@ -864,6 +1051,9 @@ static void printArr(MyString* arr[], int len)
 	}
 }
 
+/**
+ * Tests myStringCustomSort() function.
+ */
 bool testCustomSort()
 {
 	int len = 6;
@@ -873,8 +1063,9 @@ bool testCustomSort()
 	MyString *s1 = myStringAlloc(), *s2 = myStringAlloc(), *s3 = myStringAlloc(),
 		   	 *s4 = myStringAlloc(), *s5 = myStringAlloc(), *s6 = myStringAlloc();
 	// Set all MyString objects to a random permutation of the strings above.
-	myStringSetFromCString(s1, txt6); myStringSetFromCString(s2, txt3); myStringSetFromCString(s3, txt2);
-	myStringSetFromCString(s4, txt5); myStringSetFromCString(s5, txt1); myStringSetFromCString(s6, txt4);
+	myStringSetFromCString(s1, txt6); myStringSetFromCString(s2, txt3); 
+	myStringSetFromCString(s3, txt2); myStringSetFromCString(s4, txt5); 
+	myStringSetFromCString(s5, txt1); myStringSetFromCString(s6, txt4);
 	MyString* arr[] = { s1, s2, s3, s4, s5, s6 };
 	myStringCustomSort(arr, len, customComp); // Sort.
 	char* result = NULL;
@@ -898,6 +1089,9 @@ bool testCustomSort()
 
 // myStringSort function uses CustomSort function, so checking it is pointless.
 
+/**
+ * Runs one test. Prints SUCCEEDED if the test was successful, FAILED otherwise.
+ */
 void runTest(char* testName, bool (*test)(void))
 {
 	static unsigned int testNum = 1;
@@ -912,6 +1106,9 @@ void runTest(char* testName, bool (*test)(void))
 	printf(SEPARATOR);
 }
 
+/**
+ * Runs all unit-tests written above.
+ */
 void runAllTests()
 {
 	printf("Start unit-tests...\n");
@@ -938,6 +1135,9 @@ void runAllTests()
 	return;
 }
 
+/**
+ * The main function that calls runAllTests()
+ */
 int main()
 {
 	runAllTests();
