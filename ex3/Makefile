@@ -1,3 +1,5 @@
+# Macros
+
 CC = c99
 C_FLAGS = -Wvla -Wextra -Wall -g
 
@@ -6,6 +8,9 @@ LIB_OBJECTS = MyString.o
 LIB_NAME = libmyString.a
 VALGRIND_FLAGS = --leak-check=full --show-possibly-lost=yes --show-reachable=yes --undef-value-errors=yes
 TAR_OBJS = valdbg_MyStringMain valdbg_MyStringTests Makefile MyStringMain.c ${MY_STRING} README
+
+# Note that both libmyString.a and MyStringTests compile MyString.c in different ways 
+# (w and w/o -DNDEBUG)
 
 ex3.tar: ${TAR_OBJS}
 	tar -cvf ex3.tar ${TAR_OBJS} valdbg_MyStringMain
