@@ -7,7 +7,7 @@ MY_STRING = MyString.c MyString.h
 LIB_OBJECTS = MyString.o
 LIB_NAME = libmyString.a
 VALGRIND_FLAGS = --leak-check=full --show-possibly-lost=yes --show-reachable=yes --undef-value-errors=yes
-TAR_OBJS = valdbg_MyStringMain valdbg_MyStringTests Makefile MyStringMain.c ${MY_STRING} README
+TAR_OBJS = valdbg_MyStringMain valdbg_MyStringTests Makefile MyStringMain.c ${MY_STRING} README extension.pdf
 
 # Note that both libmyString.a and MyStringTests compile MyString.c in different ways 
 # (w and w/o -DNDEBUG)
